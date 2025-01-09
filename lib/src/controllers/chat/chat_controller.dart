@@ -53,7 +53,6 @@ class ChatControllers extends GetxController{
   Future<bool> getMessage()async{
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? id = prefs.getString('id');
-    print("ini id user saya $id");
     try {
       isLoading(true);
       http.Response response = await http.post(

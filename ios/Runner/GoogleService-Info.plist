@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyCjRoBmX-0lmLYYkStJRze20YGj3f1ojek</string>
+	<string>AIzaSyB9a9K5Ny_oyVd-tsmrQjRBhaiVG2EYUwA</string>
 	<key>GCM_SENDER_ID</key>
-	<string>885154903815</string>
+	<string>573521944503</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>com.example.asbApp</string>
 	<key>PROJECT_ID</key>
-	<string>akhirat-saving-box</string>
+	<string>akhirat-saving-box-9ab2c</string>
 	<key>STORAGE_BUCKET</key>
-	<string>akhirat-saving-box.firebasestorage.app</string>
+	<string>akhirat-saving-box-9ab2c.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:885154903815:ios:c6e48c9c812c390b93f7a2</string>
+	<string>1:573521944503:ios:7a271ba70d90eae1c7d232</string>
 </dict>
 </plist>

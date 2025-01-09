@@ -1,5 +1,6 @@
 import 'package:asb_app/src/components/global/index.dart';
 import 'package:asb_app/src/components/textsyle/index.dart';
+import 'package:asb_app/src/controllers/auth/auth_controller.dart';
 import 'package:asb_app/src/controllers/utilities/timeline_controller.dart';
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/daftar_lokasi_tagihan.dart';
 import 'package:asb_app/src/views/dashboard/home/invoice_page.dart';
@@ -7,10 +8,13 @@ import 'package:asb_app/src/views/dashboard/profiles/index.dart';
 import 'package:asb_app/src/views/dashboard/profiles/notification_pages.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:get/get.dart';
 import 'dart:math' as math;
 import 'package:icons_plus/icons_plus.dart';
+import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 
 class DashboardTrainer extends StatefulWidget {
   const DashboardTrainer({super.key});
@@ -20,11 +24,12 @@ class DashboardTrainer extends StatefulWidget {
 }
 
 class _DashboardTrainerState extends State<DashboardTrainer> {
-
+  AuthController authController = Get.find();
   final globalVariable = GlobalVariable();
   final globalTextStyle = GlobalTextStyle();
   bool isErrorOccured = false;
   TimelineController controller = Get.put(TimelineController());
+  DateTime now = DateTime.now();
 
   Color getRandomColor(){
     return Color((math.Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(0.85);
@@ -33,6 +38,7 @@ class _DashboardTrainerState extends State<DashboardTrainer> {
   List<Map<String, dynamic>> dataMenu = [
     {
       "details" : {
+        "description" : "Informasi Daftar Lokasi dan Tempat pengambilan kotak amal",
         "nama" : "Temukan Lokasi",
         "color" : Colors.green,
         "icon" : const Icon(LineAwesome.search_location_solid, size: 40, color: Colors.white),
@@ -41,6 +47,7 @@ class _DashboardTrainerState extends State<DashboardTrainer> {
     },
     {
       "details" : {
+        "description" : "Informasi Profil anda",
         "nama" : "Profile",
         "color" : Colors.orange,
         "icon" : const Icon(CupertinoIcons.person, size: 40, color: Colors.white),
@@ -49,6 +56,7 @@ class _DashboardTrainerState extends State<DashboardTrainer> {
     },
     {
       "details" : {
+        "description" : "Seluruh informasi notifikasi mengenai tugas dan informasi terkait akun anda",
         "nama" : "Notifikasi",
         "color" : Colors.blue,
         "icon" : const Icon(Icons.notifications_active, size: 40, color: Colors.white),
@@ -57,6 +65,7 @@ class _DashboardTrainerState extends State<DashboardTrainer> {
     },
     {
       "details" : {
+        "description" : "Informasi riwayat pengambilan kotak amal yang pernah anda ambil",
         "nama" : "History",
         "color" : Colors.indigo,
         "icon" : const Icon(BoxIcons.bx_history, size: 40, color: Colors.white),
@@ -65,6 +74,16 @@ class _DashboardTrainerState extends State<DashboardTrainer> {
     },
     {
       "details" : {
+        "description" : "Informasi Berita Umum bagi semua petugas",
+        "nama" : "Berita Umum",
+        "color" : Colors.cyan,
+        "icon" : const Icon(FontAwesome.newspaper, size: 40, color: Colors.white),
+        "to" : null
+      }
+    },
+    {
+      "details" : {
+        "description" : "Keluar dari akun anda",
         "nama" : "Sign Out",
         "color" : Colors.red,
         "icon" : const Icon(FontAwesome.power_off_solid, size: 40, color: Colors.white),
@@ -86,23 +105,23 @@ class _DashboardTrainerState extends State<DashboardTrainer> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Hallo, Admin", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-                  Text("Apa kabar anda hari ini?", style: TextStyle(fontSize: 15, color: Colors.black45)),
+                  Obx(() => Text("Assalamualaikum, ${authController.profileModels.value?.data.name ?? 'user'}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
+                  Text(DateFormat.MMMMEEEEd().format(now), style: const TextStyle(fontSize: 12, color: Colors.black45)),
                 ],
               ),
               CircleAvatar(
                 // backgroundImage: isErrorOccured ? const AssetImage("assets/images/engine.jpg") : const NetworkImage("https://masputra.nextjiesdev.site/assets/mhs/lion.png"),
-                backgroundImage: const AssetImage("assets/images/background.jpg"),
+                backgroundImage: const AssetImage("assets/images/background.png"),
                 onBackgroundImageError: (_, __) {
                   setState(() {
-                   isErrorOccured = true;
+                    isErrorOccured = true;
                   });
                 },
                 radius: 20,
-              )
+              ),
             ],
           ),
         ),
@@ -123,21 +142,34 @@ class _DashboardTrainerState extends State<DashboardTrainer> {
                   child: CupertinoContextMenu(
                     enableHapticFeedback: true,
                     actions: [
-                      CupertinoContextMenuAction(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        trailingIcon: CupertinoIcons.heart,
-                        child: const Text('Favorite'),
+                      Container(
+                        alignment: Alignment.center,
+                        width: size.width / 2,
+                        padding: const EdgeInsets.all(15),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15),
+                          color: Colors.white
+                        ),
+                        child: DefaultTextStyle(
+                          style: const TextStyle(color: Colors.black), textAlign: TextAlign.center, overflow: TextOverflow.clip,
+                          child: Text(dataMenu[i]['details']['description'] ?? "Null", 
+                        ),)
                       ),
-                      CupertinoContextMenuAction(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        isDestructiveAction: true,
-                        trailingIcon: CupertinoIcons.delete,
-                        child: const Text('Delete'),
-                      ),
+                      // CupertinoContextMenuAction(
+                      //   onPressed: () {
+                      //     Navigator.pop(context);
+                      //   },
+                      //   trailingIcon: CupertinoIcons.heart,
+                      //   child: const Text('Favorite'),
+                      // ),
+                      // CupertinoContextMenuAction(
+                      //   onPressed: () {
+                      //     Navigator.pop(context);
+                      //   },
+                      //   isDestructiveAction: true,
+                      //   trailingIcon: CupertinoIcons.delete,
+                      //   child: const Text('Delete'),
+                      // ),
                     ],
                     child: Material(
                       elevation: 0,
@@ -194,6 +226,20 @@ class _DashboardTrainerState extends State<DashboardTrainer> {
                 );
               })
             ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(authController.token.value),
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: () async {
+                    // await Clipboard.setData(ClipboardData(text: authController.token.value));
+                    Share.share(authController.token.value);
+                  },
+                  child: const Icon(Iconsax.share_bold), 
+                )
+              ],
+            )
           ],
         ),
       ),

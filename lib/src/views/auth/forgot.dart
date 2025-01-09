@@ -1,3 +1,5 @@
+import 'package:asb_app/src/controllers/auth/auth_controller.dart';
+import 'package:asb_app/src/views/auth/introduction_screen.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -12,17 +14,16 @@ class ForgotPassword extends StatefulWidget {
 }
 
 class _ForgotPasswordState extends State<ForgotPassword> {
+  AuthController authController = Get.find();
   GlobalTextStyle textStyle = GlobalTextStyle();
   GlobalVariable globalVariable = GlobalVariable();
   TextEditingController emailController = TextEditingController();
-  TextEditingController passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
 
   @override
   void dispose() {
     emailController.dispose();
-    passwordController.dispose();
     super.dispose();
   }
   
@@ -55,7 +56,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                       // const FlutterLogo(size: 100, style: FlutterLogoStyle.stacked),
                       AutoSizeText("I lost my password", style: textStyle.defaultTextStyleBold(), maxLines: 1, minFontSize: 30, maxFontSize: 37, overflow: TextOverflow.fade),
                       const SizedBox(height: 10),
-                      AutoSizeText("Inputkan alamat email yang telah didaftarkan sebelumnya oleh admin untuk dapat mengirim kode OTP", style: textStyle.defaultTextStyleMedium(color: Colors.black45), overflow: TextOverflow.clip, maxFontSize: 17, minFontSize: 14, textAlign: TextAlign.center,)
+                      AutoSizeText("Inputkan alamat email yang telah didaftarkan sebelumnya oleh admin untuk dapat mengirim password baru ke alamat email anda", style: textStyle.defaultTextStyleMedium(color: Colors.black45), overflow: TextOverflow.clip, maxFontSize: 17, minFontSize: 14, textAlign: TextAlign.center,)
                     ],
                   ),
                 ),
@@ -64,7 +65,15 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                   child: Column(
                     children: [
                       TextFormField(
+                        controller: emailController,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Mohon masukkan email anda';
+                          }
+                          return null;
+                        },
                         decoration: InputDecoration(
+                          focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: GlobalVariable.secondaryColor)),
                           enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: GlobalVariable.secondaryColor)),
                           label: Text("Email", style: textStyle.defaultTextStyleMedium(color: GlobalVariable.secondaryColor, fontSize: 16)),
                           prefixIcon: const Icon(Icons.email, color: GlobalVariable.secondaryColor)
@@ -75,14 +84,21 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                 ),
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      elevation: 0,
-                      backgroundColor: GlobalVariable.secondaryColor,
+                  child: Obx(() => ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        elevation: 0,
+                        backgroundColor: GlobalVariable.secondaryColor,
+                      ),
+                      onPressed: authController.isLoading.value ? (){} : () async {
+                        if(_formKey.currentState!.validate()){
+                          if(await authController.resetPasswordController(email: emailController.text)){
+                            Get.snackbar("Sukses", authController.responseMessage.value, colorText: Colors.white, backgroundColor: Colors.green);
+                            Get.offAll(() => const IntroductionScreen());
+                          }
+                        }
+                      }, 
+                      child: Obx(() => authController.isLoading.value ? const Padding(padding: EdgeInsets.all(5), child: CircularProgressIndicator(color: Colors.white)) : Text("Reset Password", style: textStyle.defaultTextStyleMedium(fontSize: 16, color: Colors.white)))
                     ),
-                    onPressed: (){
-                      Get.back();
-                    }, child: Text("Kirim kode OTP", style: textStyle.defaultTextStyleMedium(fontSize: 16, color: Colors.white))
                   ),
                 ),
               ],

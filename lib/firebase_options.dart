@@ -50,19 +50,20 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBc8Wx68C4LTdeMAh6mg7gqmRLePIbMHms',
-    appId: '1:885154903815:android:20f7bf2097c42f5593f7a2',
-    messagingSenderId: '885154903815',
-    projectId: 'akhirat-saving-box',
-    storageBucket: 'akhirat-saving-box.firebasestorage.app',
+    apiKey: 'AIzaSyCypByXNLJ31Gc1BxMIxvIY4ckeJOcZ9yM',
+    appId: '1:573521944503:android:b4d06de00c91842ec7d232',
+    messagingSenderId: '573521944503',
+    projectId: 'akhirat-saving-box-9ab2c',
+    storageBucket: 'akhirat-saving-box-9ab2c.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCjRoBmX-0lmLYYkStJRze20YGj3f1ojek',
-    appId: '1:885154903815:ios:c6e48c9c812c390b93f7a2',
-    messagingSenderId: '885154903815',
-    projectId: 'akhirat-saving-box',
-    storageBucket: 'akhirat-saving-box.firebasestorage.app',
+    apiKey: 'AIzaSyB9a9K5Ny_oyVd-tsmrQjRBhaiVG2EYUwA',
+    appId: '1:573521944503:ios:7a271ba70d90eae1c7d232',
+    messagingSenderId: '573521944503',
+    projectId: 'akhirat-saving-box-9ab2c',
+    storageBucket: 'akhirat-saving-box-9ab2c.firebasestorage.app',
     iosBundleId: 'com.example.asbApp',
   );
+
 }

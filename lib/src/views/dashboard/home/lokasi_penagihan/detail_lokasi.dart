@@ -21,11 +21,12 @@ enum Type {
 
 class DetailLokasi extends StatefulWidget {
   final String? name;
+  final String? code;
   final String? subtitle;
   final double? latitude;
   final double? longitude;
   final Type? type;
-  const DetailLokasi({super.key, this.name, this.subtitle, this.latitude, this.longitude, this.type});
+  const DetailLokasi({super.key, this.name, this.subtitle, this.latitude, this.longitude, this.type, this.code});
 
   @override
   State<DetailLokasi> createState() => _DetailLokasiState();
@@ -56,7 +57,7 @@ class _DetailLokasiState extends State<DetailLokasi> {
     if(kDebugMode) {
       // print(response.body);
       result.value = response.body;
-    };
+    }
     setState(() {
       routePoints = [];
       var route = jsonDecode(response.body)['routes'][0]['geometry']['coordinates'];

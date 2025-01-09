@@ -1,3 +1,5 @@
+import 'package:asb_app/src/controllers/utilities/notification_handler.dart';
+import 'package:asb_app/src/controllers/utilities/permission_handlers.dart';
 import 'package:asb_app/src/views/auth/forgot.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +19,12 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
   GlobalTextStyle textStyle = GlobalTextStyle();
   GlobalVariable globalVariable = GlobalVariable();
   var signupSelected = true.obs;
+
+  @override
+  void initState() {
+    super.initState();
+    FirebaseApi().initNotifications().then((value) => permissionsHandler());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +89,7 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
                               onPressed: (){
                                 signupSelected.value = true;
                                 Get.to(() => const SignIn());
-                              }, child: Text("Masuk", style: textStyle.defaultTextStyleMedium(fontSize: 16, color: signupSelected.value ? Colors.white : Colors.black))
+                              }, child: Text("Masuk", style: textStyle.defaultTextStyleMedium(fontSize: 14, color: signupSelected.value ? Colors.white : Colors.black))
                               ),
                             )
                           ),
@@ -98,7 +106,7 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
                               onPressed: (){
                                 signupSelected.value = false;
                                 Get.to((() => const ForgotPassword()));
-                              }, child: Text("Lupa?", style: textStyle.defaultTextStyleMedium(fontSize: 16, color: signupSelected.value ? Colors.black : Colors.white))
+                              }, child: Text("Reset Password", style: textStyle.defaultTextStyleMedium(fontSize: 14, color: signupSelected.value ? Colors.black : Colors.white))
                               ),
                             )
                           )

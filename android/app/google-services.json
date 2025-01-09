@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "885154903815",
-    "project_id": "akhirat-saving-box",
-    "storage_bucket": "akhirat-saving-box.firebasestorage.app"
+    "project_number": "573521944503",
+    "project_id": "akhirat-saving-box-9ab2c",
+    "storage_bucket": "akhirat-saving-box-9ab2c.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:885154903815:android:20f7bf2097c42f5593f7a2",
+        "mobilesdk_app_id": "1:573521944503:android:b4d06de00c91842ec7d232",
         "android_client_info": {
           "package_name": "akhirat.saving.box"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBc8Wx68C4LTdeMAh6mg7gqmRLePIbMHms"
+          "current_key": "AIzaSyCypByXNLJ31Gc1BxMIxvIY4ckeJOcZ9yM"
         }
       ],
       "services": {
