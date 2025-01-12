@@ -9,18 +9,19 @@ import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/detail_lokasi.
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/persiapan_berangkat.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:image_picker/image_picker.dart';
 
-class DaftarLokasiTagihan extends StatefulWidget {
-  const DaftarLokasiTagihan({super.key});
+class DaftarLokasiTagihanv2 extends StatefulWidget {
+  const DaftarLokasiTagihanv2({super.key});
 
   @override
-  State<DaftarLokasiTagihan> createState() => _DaftarLokasiTagihanState();
+  State<DaftarLokasiTagihanv2> createState() => _DaftarLokasiTagihanv2State();
 }
 
-class _DaftarLokasiTagihanState extends State<DaftarLokasiTagihan> {
+class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
   LocationController locationController = Get.put(LocationController());
   TrackingController trackingController = Get.put(TrackingController());
   
@@ -28,10 +29,23 @@ class _DaftarLokasiTagihanState extends State<DaftarLokasiTagihan> {
   @override
   void initState() {
     super.initState();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight]
+    );
     trackingController.getListTempatPengambilan();
     trackingController.checkingSelfFirst().then((value){
       trackingController.wasSelfieAsFirst.value = value;
     });
+  }
+
+  @override
+  void dispose() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown
+    ]);
+    super.dispose();
   }
 
   @override

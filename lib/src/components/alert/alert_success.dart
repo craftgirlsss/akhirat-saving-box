@@ -17,14 +17,13 @@ alertSuccess(BuildContext context, {required String? title, required String? con
     buttonsBorderRadius: const BorderRadius.all(
       Radius.circular(10),
     ),
-    dismissOnTouchOutside: false,
-    dismissOnBackKeyPress: false,
+    dismissOnTouchOutside: true,
+    dismissOnBackKeyPress: true,
     headerAnimationLoop: false,
     animType: AnimType.scale,
     title: title,
     desc: content,
     showCloseIcon: false,
-
     btnOkOnPress: onOK)
     .show();
 }

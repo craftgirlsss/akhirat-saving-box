@@ -2,13 +2,13 @@ import 'package:asb_app/src/components/global/index.dart';
 import 'package:asb_app/src/components/textsyle/index.dart';
 import 'package:asb_app/src/controllers/auth/auth_controller.dart';
 import 'package:asb_app/src/controllers/utilities/timeline_controller.dart';
-import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/daftar_lokasi_tagihan.dart';
 import 'package:asb_app/src/views/dashboard/home/invoice_page.dart';
+import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/cek_keberangkatan.dart';
+import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/daftar_lokasi_tagihan_v2.dart';
 import 'package:asb_app/src/views/dashboard/profiles/index.dart';
 import 'package:asb_app/src/views/dashboard/profiles/notification_pages.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:get/get.dart';
 import 'dart:math' as math;
@@ -185,7 +185,7 @@ class _DashboardTrainerState extends State<DashboardTrainer> {
                           }else{
                             switch (i) {
                               case 0:
-                                Get.to(() => const DaftarLokasiTagihan());
+                                Get.to(() => const CekKeberangkatan());
                                 break;
                               case 1:
                                 Get.to(() => const AccountSettings());

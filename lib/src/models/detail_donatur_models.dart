@@ -1,14 +1,14 @@
-class DetailsDonaturModels {
-  DetailsDonaturModels({
-    this.success,
-    this.message,
-    this.data,
+class DetailDonaturModels {
+  DetailDonaturModels({
+    required this.success,
+    required this.message,
+    required this.data,
   });
-  bool? success;
-  String? message;
-  Data? data;
+  late final bool success;
+  late final String message;
+  late final Data data;
   
-  DetailsDonaturModels.fromJson(Map<String, dynamic> json){
+  DetailDonaturModels.fromJson(Map<String, dynamic> json){
     success = json['success'];
     message = json['message'];
     data = Data.fromJson(json['data']);
@@ -29,7 +29,7 @@ class Data {
   String? address;
   String? thumbnail;
   String? lastUpdate;
-  List<Rute>?rute;
+  List<Rute>? rute;
   
   Data.fromJson(Map<String, dynamic> json){
     name = json['name'];
@@ -43,19 +43,21 @@ class Data {
 
 class Rute {
   Rute({
-    this.ruteId,
-    this.nama,
-    this.lat,
-    this.lng,
-    this.hari,
-    this.status,
+    required this.ruteId,
+    required this.nama,
+    required this.lat,
+    required this.lng,
+    required this.hari,
+    required this.images,
+    required this.status,
   });
-  String? ruteId;
-  String? nama;
-  String? lat;
-  String? lng;
-  String? hari;
-  int? status;
+  late final String ruteId;
+  late final String nama;
+  late final String lat;
+  late final String lng;
+  late final String hari;
+  late final List<String> images;
+  late final String status;
   
   Rute.fromJson(Map<String, dynamic> json){
     ruteId = json['ruteId'];
@@ -63,6 +65,19 @@ class Rute {
     lat = json['lat'];
     lng = json['lng'];
     hari = json['hari'];
+    images = List.castFrom<dynamic, String>(json['images']);
     status = json['status'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final _data = <String, dynamic>{};
+    _data['ruteId'] = ruteId;
+    _data['nama'] = nama;
+    _data['lat'] = lat;
+    _data['lng'] = lng;
+    _data['hari'] = hari;
+    _data['images'] = images;
+    _data['status'] = status;
+    return _data;
   }
 }

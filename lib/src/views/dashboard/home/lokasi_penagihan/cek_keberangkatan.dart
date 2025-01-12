@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:asb_app/src/components/global/index.dart';
 import 'package:asb_app/src/controllers/tracking/tracking_controller.dart';
+import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/daftar_lokasi_tagihan_v2.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -20,7 +21,7 @@ class _CekKeberangkatanState extends State<CekKeberangkatan> {
   RxString urlPhotoMotor = ''.obs;
   TextEditingController notesController = TextEditingController();
   ScrollController scrollController = ScrollController();
-  TrackingController trackingController = Get.find();
+  TrackingController trackingController = Get.put(TrackingController());
 
   @override
   void initState() {
@@ -194,12 +195,26 @@ class _CekKeberangkatanState extends State<CekKeberangkatan> {
           child: Obx(() => CupertinoButton(
               borderRadius: BorderRadius.circular(50),
               color: GlobalVariable.secondaryColor,
-              onPressed: trackingController.isLoading.value ? null : (){
-                if(urlPhotoHelm.value == "" || urlPhotoMotor.value == "" || urlPhotoSepatu.value == ""){
-
-                }
+              onPressed: trackingController.isLoading.value ? (){} : () async {
+                Get.to(() => const DaftarLokasiTagihanv2());
+                // if(urlPhotoHelm.value == "" || urlPhotoMotor.value == "" || urlPhotoSepatu.value == ""){
+                //   Get.snackbar("Gagal", "Mohon isikan semua foto keberangkatan", backgroundColor: Colors.red, colorText: Colors.white);
+                // }else{
+                //   if(await trackingController.postCheckingSelfFirst(
+                //     description: notesController.text, 
+                //     urlImage1: urlPhotoHelm.value,
+                //     urlImage2: urlPhotoSepatu.value,
+                //     urlImage3: urlPhotoMotor.value
+                //   )){
+                //     trackingController.wasSelfieAsFirst.value = true;
+                //     Get.snackbar("Berhasil", "Berhasil upload foto keberangkatan", backgroundColor: Colors.green, colorText: Colors.white);
+                //     Future.delayed(const Duration(seconds: 2), (){
+                //       Get.to(() => const DaftarLokasiTagihanv2());
+                //     });
+                //   }
+                // }
               },
-              child: const Text("Submit"), 
+              child: Obx(() => trackingController.isLoading.value ? const Padding(padding: EdgeInsets.all(2), child: CircularProgressIndicator(color: Colors.white)) : const Text("Submit")), 
             ),
           ),
         ),
@@ -242,7 +257,7 @@ class _CekKeberangkatanState extends State<CekKeberangkatan> {
   File? imageCameraHelm;
   pickImageFromCameraHelm() async {
     final ImagePicker picker = ImagePicker();
-    final XFile? imagePicked = await picker.pickImage(source: ImageSource.camera, imageQuality: 50, preferredCameraDevice: CameraDevice.front, requestFullMetadata: true);
+    final XFile? imagePicked = await picker.pickImage(source: ImageSource.camera, imageQuality: 20, preferredCameraDevice: CameraDevice.front, requestFullMetadata: true);
     if(imagePicked != null){
       setState(() {
         imageCameraHelm = File(imagePicked.path);
@@ -256,7 +271,7 @@ class _CekKeberangkatanState extends State<CekKeberangkatan> {
   File? imageCameraMotor;
   pickImageFromCameraMotor() async {
     final ImagePicker picker = ImagePicker();
-    final XFile? imagePicked = await picker.pickImage(source: ImageSource.camera, imageQuality: 50, preferredCameraDevice: CameraDevice.front, requestFullMetadata: true);
+    final XFile? imagePicked = await picker.pickImage(source: ImageSource.camera, imageQuality: 20, preferredCameraDevice: CameraDevice.front, requestFullMetadata: true);
     if(imagePicked != null){
       setState(() {
         imageCameraHelm = File(imagePicked.path);
@@ -270,7 +285,7 @@ class _CekKeberangkatanState extends State<CekKeberangkatan> {
   File? imageCameraSepatu;
   pickImageFromCameraSepatu() async {
     final ImagePicker picker = ImagePicker();
-    final XFile? imagePicked = await picker.pickImage(source: ImageSource.camera, imageQuality: 50, preferredCameraDevice: CameraDevice.front, requestFullMetadata: true);
+    final XFile? imagePicked = await picker.pickImage(source: ImageSource.camera, imageQuality: 20, preferredCameraDevice: CameraDevice.front, requestFullMetadata: true);
     if(imagePicked != null){
       setState(() {
         imageCameraHelm = File(imagePicked.path);

@@ -1,15 +1,20 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:asb_app/src/components/alert/alert_failed.dart';
 import 'package:asb_app/src/components/alert/alert_success.dart';
 import 'package:asb_app/src/components/global/index.dart';
+import 'package:asb_app/src/controllers/auth/auth_controller.dart';
+import 'package:asb_app/src/controllers/tracking/tracking_controller.dart';
+import 'package:asb_app/src/controllers/utilities/alert_dialogs.dart';
 import 'package:asb_app/src/controllers/utilities/location_controller.dart';
-import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/perhitungan_perolehan.dart';
+import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/jadwal_saya.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:icons_plus/icons_plus.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
@@ -33,9 +38,12 @@ class DetailLokasi extends StatefulWidget {
 }
 
 class _DetailLokasiState extends State<DetailLokasi> {
-  var done = false.obs;
-  var showAnimation = false.obs;
+  RxInt indexSelected = RxInt(-1); // number from Index of array Rute
+  RxString indexRuteID = RxString(""); // Rute ID
+  RxString indexRuteName = RxString(""); // Rute Name
   LocationController locationController = Get.find();
+  TrackingController trackingController = Get.find();
+  AuthController authController = Get.find();
   MapController mapController = MapController();
   RxList imageProofList = [].obs;
   List<LatLng> routePoints = [];
@@ -44,6 +52,7 @@ class _DetailLokasiState extends State<DetailLokasi> {
   double? v3;
   double? v4;
   var result = "".obs;
+  RxString setNameLocationFromLatLong = "".obs;
 
   getDestinationLocation(String destinationName) async {
     v3 = -7.443653; //Target lokasi latitude
@@ -76,7 +85,11 @@ class _DetailLokasiState extends State<DetailLokasi> {
   @override
   void initState() {
     super.initState();
-    getDestinationLocation(locationController.myOfficeLocation.value);
+    // getDestinationLocation(locationController.myOfficeLocation.value);
+    Future.delayed(const Duration(seconds: 1), (){
+      // print(widget.code);
+      trackingController.checkDetailsOfDonatur(code: widget.code, token: authController.token.value);
+    });
   }
 
   @override
@@ -97,6 +110,13 @@ class _DetailLokasiState extends State<DetailLokasi> {
             },
             child: const Icon(Icons.gps_fixed, color: GlobalVariable.secondaryColor), 
             ),
+          ),
+
+          CupertinoButton(
+            onPressed: (){
+              Get.to(() => const ScheduleView());
+            },
+            child: const Icon(Clarity.calendar_solid, color: GlobalVariable.secondaryColor), 
           )
         ],
       ),
@@ -104,6 +124,7 @@ class _DetailLokasiState extends State<DetailLokasi> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            
             Container(
               color: Colors.transparent,
               width: size.width,
@@ -124,16 +145,63 @@ class _DetailLokasiState extends State<DetailLokasi> {
                       maxNativeZoom: 19,
                       retinaMode: true,
                     ),
-                    PolylineLayer(
-                      polylines: [
-                        Polyline(
-                          points: routePoints, color: Colors.blue, strokeWidth: 4, borderColor: Colors.blue.shade800, borderStrokeWidth: 3)
-                      ],
-                    ),
+                    // PolylineLayer(
+                    //   polylines: [
+                    //     Polyline(
+                    //       points: routePoints, color: Colors.blue, strokeWidth: 4, borderColor: Colors.blue.shade800, borderStrokeWidth: 3)
+                    //   ],
+                    // ),
                     Obx(() => locationController.isLoading.value 
                       ? Container() 
-                      : MarkerLayer(
-                        markers: [
+                      : trackingController.isLoading.value ? Container() :
+                      MarkerLayer(
+                        markers: trackingController.detailDonaturModels.value == null ? [] :
+                        List.generate(trackingController.detailDonaturModels.value!.data.rute!.length + 1, (index) {
+                          if(index != trackingController.detailDonaturModels.value?.data.rute?.length){
+                            return Marker(
+                              rotate: true,
+                              alignment: Alignment.center,
+                              width: 100,
+                              point: LatLng(double.parse(trackingController.detailDonaturModels.value!.data.rute![index].lat), double.parse(trackingController.detailDonaturModels.value!.data.rute![index].lng)),
+                              child: Tooltip(
+                                message: trackingController.detailDonaturModels.value!.data.rute?[index].nama ?? "Tidak ada nama",
+                                child: Obx(
+                                  () => InkWell(
+                                    onTap: locationController.isLoading.value ? null : (){
+                                      indexSelected.value = index;
+                                      indexRuteID.value = trackingController.detailDonaturModels.value!.data.rute![index].ruteId;
+                                      indexRuteName.value = trackingController.detailDonaturModels.value!.data.rute![index].nama;
+                                      locationController.getAddressFromLangitudeAndLongitudeV2(
+                                        lat: double.parse(trackingController.detailDonaturModels.value!.data.rute![index].lat),
+                                        long: double.parse(trackingController.detailDonaturModels.value!.data.rute![index].lng)
+                                      ).then((locationName){
+                                        setNameLocationFromLatLong.value = locationName;
+                                      });
+                                      // print(trackingController.detailDonaturModels.value!.data!.rute![index].nama ?? "Tidak ada nama");
+                                    },
+                                    child: Column(
+                                      children: [
+                                        const Icon(Icons.place_rounded, color: Colors.red, size: 15),
+                                        DecoratedBox(
+                                          decoration: const BoxDecoration(color: Colors.black),
+                                          child: Text(trackingController.detailDonaturModels.value!.data.rute?[index].nama ?? "Tidak ada nama", style: const TextStyle(backgroundColor: Colors.black, color: Colors.white, fontSize: 8), textAlign: TextAlign.center),
+                                        ),
+                                        // Expanded(child: Text(trackingController.detailDonaturModels.value!.data!.rute![index].nama ?? "Tidak ada nama", style: const TextStyle(backgroundColor: Colors.black, color: Colors.white, fontSize: 8), textAlign: TextAlign.center,))
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+                          return Marker(
+                            rotate: true,
+                            point: LatLng(locationController.myLatitude.value, locationController.myLongitude.value),
+                            child: const Icon(Icons.place_rounded, color: Colors.blue)
+                          );
+                        },)
+                        /*
+                        [
                           const Marker(
                             rotate: true,
                             point: LatLng(-7.443653, 112.682705),
@@ -156,6 +224,7 @@ class _DetailLokasiState extends State<DetailLokasi> {
                             )
                           ),
                         ]
+                        */
                       ),
                     )
                   ]
@@ -163,24 +232,62 @@ class _DetailLokasiState extends State<DetailLokasi> {
               ),
             ),
 
-            SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: List.generate(3, (i) => tileImageLocation(onPressed: () async {
-                  await showDialog(
-                    context: context,
-                    builder: (_) => const ImageDialog(urlImage: "https://static.promediateknologi.id/crop/0x150:1600x1053/0x0/webp/photo/p2/85/2023/06/26/oke-masjid-agung-salat-id-218673181.jpeg")
-                  );
-                }, urlImage: "https://static.promediateknologi.id/crop/0x150:1600x1053/0x0/webp/photo/p2/85/2023/06/26/oke-masjid-agung-salat-id-218673181.jpeg")),
-              ),
+            Obx(() {
+              if(trackingController.detailDonaturModels.value?.data.rute?.length == 0){
+                return const SizedBox();
+              }
+
+              if(indexSelected.value == -1){
+                return tileImageLocation(
+                  onPressed: () async {
+                    await showDialog(
+                      context: context,
+                      builder: (_) => ImageDialog(urlImage: trackingController.detailDonaturModels.value?.data.thumbnail)
+                    );
+                  }, 
+                  urlImage: trackingController.detailDonaturModels.value?.data.thumbnail);
+              }else{
+                return SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  scrollDirection: Axis.horizontal,
+                  child: Obx(() => Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: trackingController.isLoading.value 
+                      ? [] 
+                      : List.generate(trackingController.detailDonaturModels.value?.data.rute?[indexSelected.value].images.length ?? 0, (i) 
+                        => tileImageLocation(
+                          onPressed: () async {
+                            await showDialog(
+                              context: context,
+                              builder: (_) => ImageDialog(urlImage: trackingController.detailDonaturModels.value?.data.rute?[indexSelected.value].images[i])
+                            );
+                          }, 
+                      urlImage: trackingController.detailDonaturModels.value?.data.rute?[indexSelected.value].images[i])),
+                    ),
+                  ),
+                );
+              }
+              } 
             ),
 
-            ListTile(
-              leading: const Icon(Icons.location_on, color: GlobalVariable.secondaryColor),
-              title: Text(widget.name ?? "Tidak ada nama", style: GoogleFonts.poppins(color: Colors.black54, fontWeight: FontWeight.bold)),
-              subtitle: Text(widget.subtitle ?? "Alamat tidak diketahui", style: const TextStyle(fontSize: 10, color: Colors.black54)),
+            Obx(() {
+              if(trackingController.detailDonaturModels.value?.data.rute?.length == 0){
+                return const SizedBox();
+              }
+
+              if(indexSelected.value == -1){
+                return ListTile(
+                  leading: const Icon(Icons.location_on, color: GlobalVariable.secondaryColor),
+                  title: Text(widget.name ?? "Tidak ada nama", style: GoogleFonts.poppins(color: Colors.black54, fontWeight: FontWeight.bold)),
+                  subtitle: Obx(() => Text(setNameLocationFromLatLong.value != "" ? setNameLocationFromLatLong.value : widget.subtitle!, style: const TextStyle(fontSize: 10, color: Colors.black54))),
+                );
+              }
+              return ListTile(
+                leading: const Icon(Icons.location_on, color: GlobalVariable.secondaryColor),
+                title: Text(trackingController.detailDonaturModels.value?.data.rute?[indexSelected.value].nama ?? "Tidak ada nama", style: GoogleFonts.poppins(color: Colors.black54, fontWeight: FontWeight.bold)),
+                subtitle: Obx(() => Text(setNameLocationFromLatLong.value != "" ? setNameLocationFromLatLong.value : widget.subtitle!, style: const TextStyle(fontSize: 10, color: Colors.black54))),
+              );
+            } 
             ),
             ListTile(
               leading: const Icon(Icons.my_location_rounded, color: GlobalVariable.secondaryColor),
@@ -192,112 +299,81 @@ class _DetailLokasiState extends State<DetailLokasi> {
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-        child: CupertinoButton(
-          color: GlobalVariable.secondaryColor,
-          onPressed: widget.type == Type.masjid ? (){
-            showModalBottomSheet<void>(
-              context: context,
-              builder: (BuildContext context) {
-                return StatefulBuilder(
-                  builder: (context, setState) {
-                    return Obx(() => Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-                        height: size.height / 2,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border.all(color: Colors.black45),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: imageProofList.isEmpty ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              const Icon(Icons.add_a_photo_rounded, size: 50, color: Colors.black45),
-                              const SizedBox(height: 5),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(backgroundColor: GlobalVariable.secondaryColor, elevation: 0),
-                                child: Text('Tambahkan Bukti', style: GoogleFonts.poppins(color: Colors.white)),
-                                onPressed: () {
-                                  pickImageFromCamera();
-                                },
-                              ),
-                              const SizedBox(height: 10),
-                              Text("Tambahkan foto sebagai bukti bahwa anda telah selesai melakukan pengambilan donasi", style: GoogleFonts.poppins(color: Colors.black54), textAlign: TextAlign.center)
-                            ],
+        child: Obx(() {
+          if(trackingController.detailDonaturModels.value != null){
+            for(int i = 0; i < trackingController.detailDonaturModels.value!.data.rute!.length; i++){
+              if(trackingController.detailDonaturModels.value!.data.rute![i].status == "2"){
+                return Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)
                           ),
-                        ) : SizedBox(
-                          width: size.width,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                children: [
-                                  Text("Tambah Bukti Pengambilan", style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black54)),
-                                  const SizedBox(height: 20),
-                                  SingleChildScrollView(
-                                    scrollDirection: Axis.horizontal,
-                                    child: Obx(() => Row(
-                                        children: List.generate(
-                                          imageProofList.length + 1, 
-                                          (i) {
-                                            if(i != imageProofList.length){
-                                              return Container(
-                                                width: 100,
-                                                height: 100,
-                                                clipBehavior: Clip.hardEdge,
-                                                margin: const EdgeInsets.symmetric(horizontal: 5),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.transparent,
-                                                  border: Border.all(color: Colors.black45),
-                                                  borderRadius: BorderRadius.circular(5),
-                                                ),
-                                                child: Image.file(File(imageProofList[i]), fit: BoxFit.cover,),
-                                              );
-                                            }
-                                            return CupertinoButton(
-                                              padding: EdgeInsets.zero,
-                                              onPressed: (){
-                                                pickImageFromCamera();
-                                              },
-                                              child: Container(
-                                                width: 100,
-                                                height: 100,
-                                                padding: const EdgeInsets.all(15),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.transparent,
-                                                  border: Border.all(color: Colors.black26),
-                                                  borderRadius: BorderRadius.circular(5)
-                                                ),
-                                                child: const Icon(Icons.add_a_photo, color: Colors.black45),
-                                              ),
-                                            );
-                                          }
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              CupertinoButton(color: GlobalVariable.secondaryColor, child: const Text("Submit"), onPressed: (){
-                                alertSuccess(context, title: "Berhasil", content: "Berhasil uplaod foto bukti pengambilan kotak", onOK: (){
-                                  Navigator.of(context)..pop()..pop();
-                                });
-                              })
-                            ],
-                          ),
+                          side: const BorderSide(width: 2.0, color: GlobalVariable.secondaryColor),
                         ),
-                      ),
-                    );
-                  },
+                        onPressed: (){}, 
+                        child: const Text("Batalkan Pengambilan", style: TextStyle(color: GlobalVariable.secondaryColor, fontSize: 13, fontWeight: FontWeight.bold), overflow: TextOverflow.clip, textAlign: TextAlign.center),
+                      )
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Obx(() => ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: GlobalVariable.secondaryColor,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)
+                            ),
+                          ),
+                          onPressed: trackingController.isLoading.value ? (){} : (){}, 
+                          child: const Text("Selesai", style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold))
+                        ),
+                      )
+                    ),
+                  ],
                 );
-              },
-            );
-          } : (){
-            Get.to(() => const PerhitunganPerolehan());
-          },
-          child: const Text("Selesai"), 
-        ),
+              }
+            }
+          }
+          return Obx(() => ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: indexSelected.value > -1 ? Colors.green : GlobalVariable.secondaryColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)
+                ),
+              ),
+              onPressed: trackingController.isLoading.value ? (){} : (){
+                if(indexSelected.value < 0){
+                  showAlertDialogOnlyYes(context, title: "Gagal", content: "Anda belum memilih lokasi pengambilan. Mohon pilih salah satu marker icon di map untuk memilih lokasi pengambilan.");
+                }else{
+                  showAlertDialogYesOrNo(context, title: "Ambil Rute", content: "Apakah anda yakin mengambil rute ${indexRuteName.value}", onPressed: () async {
+                    Navigator.pop(context);
+                    if(await trackingController.konfirmasiPengambilanRute(kodeRute: indexRuteID.value)){
+                      alertSuccess(context, title: "Berhasil", content: "Berhasil memilih lokasi ${indexRuteName.value}");
+                    }else{
+                      alertFailed(context, title: "Gagal", content: trackingController.responseMessage.value);
+                    }
+                  });
+                }
+              }, 
+              child: Obx(() {
+                if(trackingController.isLoading.value){
+                  const SizedBox(
+                    width: 10,
+                    height: 10,
+                    child: CircularProgressIndicator(color: Colors.white)
+                  );
+                }
+                if(indexSelected.value == -1){
+                  return const Text("Mohon Pilih tempat", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold));
+                }else{
+                  return const Text("Ambil Tempat!", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold));
+                }
+              })
+            ),
+          );
+        }),
       ),
     );
   }
@@ -377,7 +453,8 @@ class ImageDialog extends StatelessWidget {
         decoration: BoxDecoration(
           image: DecorationImage(
             image: urlImage != null ? NetworkImage(urlImage!) : const AssetImage('assets/images/background.png'),
-            fit: BoxFit.cover
+            fit: BoxFit.cover,
+            onError: (exception, stackTrace) => const Icon(CupertinoIcons.photo, size: 30, color: GlobalVariable.secondaryColor),
           )
         ),
       ),

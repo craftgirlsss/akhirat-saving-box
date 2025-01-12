@@ -55,6 +55,23 @@ class LocationController extends GetxController {
     }
   }
 
+  Future<String> getAddressFromLangitudeAndLongitudeV2({double? lat, double? long}) async {
+    try {
+      List<Placemark> placemarkList = await placemarkFromCoordinates(
+        lat ?? 0.0,
+        long ?? 0.0,
+      );
+      if(placemarkList.isNotEmpty){
+        Placemark place = placemarkList[0];
+        return "${place.subLocality}, ${place.locality}, ${place.subAdministrativeArea}, ${place.administrativeArea}, ${place.postalCode}, ${place.country}";
+      }
+      return "Failed to get Location";
+    } catch (e) {
+      if(kDebugMode) print(e.toString());
+      return "Failed to get Location";
+    }
+  }
+
   Future<void> getCurrentLocation() async {
     isLoading(true);
     Position position = await determinePosition();
