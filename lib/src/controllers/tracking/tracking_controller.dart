@@ -50,11 +50,11 @@ class TrackingController extends GetxController {
     }
   }
 
-  Future<bool> getListDonatur({String? ruteID, String? date}) async {
+  Future<bool> getListDonatur({String? ruteID, String? date, String? type = "semua"}) async {
     try {
       isLoading(true);
       http.Response response = await http.get(
-        Uri.tryParse("${GlobalVariable.mainURL}/list-donatur?user=${authController.token.value}&rute_id=$ruteID&type=semua&bulan=$date")!,
+        Uri.tryParse("${GlobalVariable.mainURL}/list-donatur?user=${authController.token.value}&rute_id=$ruteID&type=$type&bulan=$date")!,
         headers: {
           'x-api-key': GlobalVariable.apiKey,
         }
@@ -207,7 +207,7 @@ class TrackingController extends GetxController {
   }
 
 
-  Future<bool> konfirmasiPengambilanRute({String? kodeRute}) async {
+  Future<bool> konfirmasiPengambilanRute({String? jadwaID}) async {
     try {
       isLoading(true);
       http.Response response = await http.post(
@@ -217,7 +217,78 @@ class TrackingController extends GetxController {
         },
         body: {
           'user': authController.token.value,
-          'idRute': kodeRute
+          'jadwal': jadwaID
+        },
+      );
+      var result = jsonDecode(response.body);
+      isLoading(false);
+      if (response.statusCode == 200) {
+        if(result['success']) {
+          responseMessage.value = result['message'];
+          return true;
+        }
+        responseMessage.value = result['message'];
+        return false;
+      } else {
+        responseMessage.value = result['message'];
+        return false;
+      }
+    } catch (e) {
+      isLoading(false);
+      responseMessage.value = e.toString();
+      return false;
+    }
+  }
+
+
+  Future<bool> postNotification({String? type, String? donaturID, String? jadwaID}) async {
+    try {
+      isLoading(true);
+      http.Response response = await http.post(
+        Uri.tryParse("${GlobalVariable.mainURL}/send-notif")!,
+        headers: {
+          'x-api-key': GlobalVariable.apiKey,
+        },
+        body: {
+          'user': authController.token.value,
+          'type': type,
+          'donatur': donaturID,
+          'jadwal': jadwaID
+        },
+      );
+      var result = jsonDecode(response.body);
+      isLoading(false);
+      if (response.statusCode == 200) {
+        if(result['success']) {
+          responseMessage.value = result['message'];
+          return true;
+        }
+        responseMessage.value = result['message'];
+        return false;
+      } else {
+        responseMessage.value = result['message'];
+        return false;
+      }
+    } catch (e) {
+      isLoading(false);
+      responseMessage.value = e.toString();
+      return false;
+    }
+  }
+
+  Future<bool> ubahTanggalRapel({String? jam, String? jadwalID, String? tanggal}) async {
+    try {
+      isLoading(true);
+      http.Response response = await http.post(
+        Uri.tryParse("${GlobalVariable.mainURL}/update-jadwal")!,
+        headers: {
+          'x-api-key': GlobalVariable.apiKey,
+        },
+        body: {
+          'user': authController.token.value,
+          'jadwal': jadwalID,
+          'tanggal': tanggal,
+          'waktu': jam
         },
       );
       var result = jsonDecode(response.body);

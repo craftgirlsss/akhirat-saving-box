@@ -92,14 +92,12 @@ class _DaftarLokasiTagihanState extends State<DaftarLokasiTagihan> {
                     urlPhoto: trackingController.tempatPengambilanModels.value?.data?[i].thumbnail,
                     onPressed: trackingController.wasSelfieAsFirst.value ? (){
                       Get.to(() => DetailLokasi(
-                        type: Type.masjid,
                         code: trackingController.tempatPengambilanModels.value?.data?[i].code,
                         name: trackingController.tempatPengambilanModels.value?.data?[i].name ?? "Nama tempat tidak ada", 
                         subtitle: trackingController.tempatPengambilanModels.value?.data?[i].address ?? "Nama tempat tidak diketahui"));
                     } : (){
                       Get.to(() => DetailLokasi(
                         code: trackingController.tempatPengambilanModels.value?.data?[i].code,
-                        type: Type.masjid,
                         name: trackingController.tempatPengambilanModels.value?.data?[i].name ?? "Nama tempat tidak ada", 
                         subtitle: trackingController.tempatPengambilanModels.value?.data?[i].address ?? "Nama tempat tidak diketahui"));
                       // showAlertDialogOnlyYes(context, title: "Gagal", content: "Anda belum melakukan pengambilan gambar diri sendiri untuk memulai pengambilan kotak, silahkan klik tombol kamera pada pojok kanan atas. Mohon foto selfi dengan perlengkapan lengkap sesuai aturan yang berlaku.");

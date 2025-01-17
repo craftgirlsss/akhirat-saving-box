@@ -3,7 +3,6 @@ import 'package:asb_app/src/components/dropdown/default_dropdown.dart';
 import 'package:asb_app/src/components/global/index.dart';
 import 'package:asb_app/src/controllers/tracking/tracking_controller.dart';
 import 'package:asb_app/src/controllers/utilities/location_controller.dart';
-import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/data_cell.dart';
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/detail_lokasi.dart';
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/persiapan_berangkat.dart';
 import 'package:flutter/cupertino.dart';
@@ -34,6 +33,8 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
   RxBool showDataTable = false.obs;
   RxString dropdownRute = "".obs;
   RxString dropdownTipe = "Semua".obs;
+  RxDouble latitudeRute = 0.0.obs;
+  RxDouble longitudeRute = 0.0.obs;
   RxList<String> listRute = ['Pilihan'].obs;
 
   String dateFormatted({DateTime? time}){
@@ -41,13 +42,12 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
   }
 
   String dateFormattedYearAndMonth({DateTime? time}){
-    return DateFormat('yyyy MMM').format(time ?? now);
+    return DateFormat('yyyy MMMM').format(time ?? now);
   }
 
   String dateFormatTime({DateTime? time}){
-    return DateFormat().add_jm().format(time ?? now);
+    return DateFormat('hh:mm:ss').format(time ?? now);
   }
-
 
   void _showDialog(Widget child) {
     showCupertinoModalPopup<void>(
@@ -87,6 +87,15 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
             ruteID(trackingController.ruteModels.value!.data[0].id);
             dropdownRute(trackingController.ruteModels.value!.data[0].name);
             dropdownTipe(list2[0]);
+            latitudeRute(double.parse(trackingController.ruteModels.value!.data[0].lat!));
+            longitudeRute(double.parse(trackingController.ruteModels.value!.data[0].lng!));
+            trackingController.getListDonatur(date: tanggalController.text, ruteID: ruteID.value, type: "semua").then((result){
+              if(result){
+                showDataTable(true);
+              }else{
+                showDataTable(false);
+              }
+            });
             enableSelection(true);
           }else{
             enableSelection(false);
@@ -94,16 +103,6 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
           }
         }
       });
-      // trackingController.getListTempatPengambilan();
-      // trackingController.checkingSelfFirst().then((value){
-      //   trackingController.wasSelfieAsFirst.value = value;
-      //   if(trackingController.tempatPengambilanModels.value?.data != null){
-      //     list1 = [];
-      //     for(int i = 0; i < trackingController.tempatPengambilanModels.value!.data!.length; i++){
-      //       list1.add(trackingController.tempatPengambilanModels.value!.data![i].name!);
-      //     }
-      //   }
-      // });
     });
   }
 
@@ -126,25 +125,6 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
         forceMaterialTransparency: true,
         title: const Text("Daftar Tempat", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
         centerTitle: true,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: ElevatedButton(
-              onPressed: (){
-                Get.to(() => const DetailLokasi());
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: GlobalVariable.secondaryColor,
-                elevation: 0
-              ),
-              child: const Text("Lanjut", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),)
-            ),
-          )
-          // Obx(() => CupertinoButton(onPressed: trackingController.wasSelfieAsFirst.value ? null : (){
-          //   // pickImageFromCamera();
-          //   Get.to(() => const CekKeberangkatan());
-          // }, child: Icon(CupertinoIcons.photo_camera_solid, color: trackingController.wasSelfieAsFirst.value ? Colors.grey : GlobalVariable.secondaryColor)))
-        ],
       ),
       body: RefreshIndicator(
         backgroundColor: GlobalVariable.secondaryColor,
@@ -157,6 +137,13 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                 for(int i = 0; i < trackingController.ruteModels.value!.data.length; i++){
                   listRute.add(trackingController.ruteModels.value!.data[i].name!);
                 }
+                trackingController.getListDonatur(date: tanggalController.text, ruteID: ruteID.value, type: dropdownTipe.value).then((result){
+                  if(result){
+                    showDataTable(true);
+                  }else{
+                    showDataTable(false);
+                  }
+                });
                 enableSelection(true);
               }else{
                 enableSelection(false);
@@ -183,7 +170,14 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                               listContentDropDown: listRute,
                               onChanged: (value) {
                                 dropdownRute.value = value!;
-                                trackingController.getListDonatur(date: tanggalController.text, ruteID: ruteID.value).then((result){
+                                for(int i = 0; i < trackingController.ruteModels.value!.data.length; i++){
+                                  if(trackingController.ruteModels.value!.data[i].name == value){
+                                    ruteID(trackingController.ruteModels.value!.data[i].id);
+                                    latitudeRute(double.parse(trackingController.ruteModels.value!.data[i].lat!));
+                                    longitudeRute(double.parse(trackingController.ruteModels.value!.data[i].lng!));
+                                  }
+                                }
+                                trackingController.getListDonatur(date: tanggalController.text, ruteID: ruteID.value, type: dropdownTipe.value.toLowerCase()).then((result){
                                   if(result){
                                     showDataTable(true);
                                   }else{
@@ -217,7 +211,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                                     setState(() {
                                       tanggalController.text = dateFormattedYearAndMonth(time: value);                                
                                     });
-                                    trackingController.getListDonatur(date: tanggalController.text, ruteID: ruteID.value).then((result){
+                                    trackingController.getListDonatur(date: tanggalController.text, ruteID: ruteID.value, type: dropdownTipe.value.toLowerCase()).then((result){
                                       if(result){
                                         showDataTable(true);
                                       }else{
@@ -272,7 +266,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                               dropdown: dropdownTipe.value,
                               onChanged: (value) {
                                 dropdownTipe(value);
-                                trackingController.getListDonatur(date: tanggalController.text, ruteID: ruteID.value).then((result){
+                                trackingController.getListDonatur(date: tanggalController.text, ruteID: ruteID.value, type: dropdownTipe.value.toLowerCase()).then((result){
                                   if(result){
                                     showDataTable(true);
                                   }else{
@@ -314,7 +308,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                             label: Expanded(
                               child: Text(
                                 'Kode',
-                                style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: Colors.white),
+                                style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: Colors.white, fontSize: 11),
                               ),
                             ),
                           ),
@@ -322,7 +316,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                             label: Expanded(
                               child: Text(
                                 'Name',
-                                style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: Colors.white),
+                                style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: Colors.white, fontSize: 11),
                               ),
                             ),
                           ),
@@ -330,7 +324,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                             label: Expanded(
                               child: Text(
                                 'Alamat',
-                                style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: Colors.white),
+                                style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: Colors.white, fontSize: 11),
                               ),
                             ),
                           ),
@@ -338,7 +332,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                             label: Expanded(
                               child: Text(
                                 'Nomor HP',
-                                style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: Colors.white),
+                                style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: Colors.white, fontSize: 11),
                               ),
                             ),
                           ),
@@ -346,7 +340,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                             label: Expanded(
                               child: Text(
                                 'Jam',
-                                style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: Colors.white),
+                                style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: Colors.white, fontSize: 11),
                               ),
                             ),
                           ),
@@ -354,7 +348,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                             label: Expanded(
                               child: Text(
                                 'Tanggal',
-                                style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: Colors.white),
+                                style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: Colors.white, fontSize: 11),
                               ),
                             ),
                           ),
@@ -362,7 +356,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                             label: Expanded(
                               child: Text(
                                 'H',
-                                style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: Colors.white),
+                                style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: Colors.white, fontSize: 11),
                               ),
                             ),
                           ),
@@ -370,7 +364,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                             label: Expanded(
                               child: Text(
                                 'H-1',
-                                style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: Colors.white),
+                                style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: Colors.white, fontSize: 11),
                               ),
                             ),
                           ),
@@ -378,7 +372,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                             label: Expanded(
                               child: Text(
                                 'H-2',
-                                style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: Colors.white),
+                                style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: Colors.white, fontSize: 11),
                               ),
                             ),
                           ),
@@ -386,7 +380,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                             label: Expanded(
                               child: Text(
                                 'Rapel',
-                                style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: Colors.white),
+                                style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: Colors.white, fontSize: 11),
                               ),
                             ),
                           ),
@@ -394,7 +388,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                             label: Expanded(
                               child: Text(
                                 'Jadwal Rapel',
-                                style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: Colors.white),
+                                style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: Colors.white, fontSize: 11),
                               ),
                             ),
                           ),
@@ -402,27 +396,66 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                             label: Expanded(
                               child: Text(
                                 'Status Pengambilan',
-                                style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: Colors.white),
+                                style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: Colors.white, fontSize: 11),
+                              ),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Expanded(
+                              child: Text(
+                                'Lihat Halaman',
+                                style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: Colors.white, fontSize: 11),
                               ),
                             ),
                           ),
                         ],
                         rows: List.generate(trackingController.daftarDonatur.value?.data.length ?? 0, (i){
                           return DataRow(
+                            color: WidgetStatePropertyAll(trackingController.daftarDonatur.value?.data[i].status == "5" ?  Colors.yellow : Colors.white),
                             cells: <DataCell>[
                               // Kode
-                              DataCell(Text(trackingController.daftarDonatur.value?.data[i].id ?? i.toString())),
+                              DataCell(Text(trackingController.daftarDonatur.value?.data[i].id ?? i.toString(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),)),
                               // Name
-                              DataCell(Text(trackingController.daftarDonatur.value?.data[i].name ?? i.toString())),
+                              DataCell(Text(trackingController.daftarDonatur.value?.data[i].name ?? i.toString(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),)),
                               // Alamat
-                              DataCell(Text(trackingController.daftarDonatur.value?.data[i].alamat ?? i.toString())),
+                              DataCell(Text(trackingController.daftarDonatur.value?.data[i].alamat ?? i.toString(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),)),
                               // Phone
-                              DataCell(Text(trackingController.daftarDonatur.value?.data[i].noHp ?? i.toString())),
+                              DataCell(Text(trackingController.daftarDonatur.value?.data[i].noHp ?? i.toString(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),)),
                               //Jam
-                              DataCell(Text(trackingController.daftarDonatur.value?.data[i].jam ?? i.toString())),
+                              DataCell(Obx(() => GestureDetector(
+                                onTap: trackingController.isLoading.value ? null : () async {
+                                  _showDialog(
+                                    CupertinoDatePicker(
+                                      mode: CupertinoDatePickerMode.time,
+                                      use24hFormat: true,
+                                      initialDateTime: now,
+                                      onDateTimeChanged: (value) {
+                                        setState(() {
+                                          trackingController.daftarDonatur.value?.data[i].jam = dateFormatTime(time: value);
+                                        });
+                                      },
+                                      maximumYear: now.year,
+                                      minimumYear: now.year - 10,
+                                    )
+                                  );
+                                  await trackingController.ubahTanggalRapel(
+                                    jadwalID: trackingController.daftarDonatur.value?.data[i].jadwal,
+                                    jam: trackingController.daftarDonatur.value?.data[i].jam,
+                                    tanggal: trackingController.daftarDonatur.value?.data[i].tanggal,
+                                  ).then((value){
+                                    trackingController.getListDonatur(date: tanggalController.text, ruteID: ruteID.value, type: dropdownTipe.value.toLowerCase()).then((result){
+                                      if(result){
+                                        showDataTable(true);
+                                      }else{
+                                        showDataTable(false);
+                                      }
+                                    });
+                                  });
+                                },
+                                child: Text(trackingController.daftarDonatur.value?.data[i].jam ?? i.toString(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),)))),
                               // Tanggal
                               DataCell(Obx(() => GestureDetector(
-                                onTap: trackingController.isLoading.value ? null : (){
+                                onTap: trackingController.isLoading.value ? null : () async {
                                   _showDialog(
                                     CupertinoDatePicker(
                                       mode: CupertinoDatePickerMode.date,
@@ -436,53 +469,214 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                                       minimumYear: now.year - 10,
                                     )
                                   );
+                                  await trackingController.ubahTanggalRapel(
+                                    jadwalID: trackingController.daftarDonatur.value?.data[i].jadwal,
+                                    jam: trackingController.daftarDonatur.value?.data[i].jam,
+                                    tanggal: trackingController.daftarDonatur.value?.data[i].tanggal,
+                                  ).then((value){
+                                    trackingController.getListDonatur(date: tanggalController.text, ruteID: ruteID.value, type: dropdownTipe.value.toLowerCase()).then((result){
+                                      if(result){
+                                        showDataTable(true);
+                                      }else{
+                                        showDataTable(false);
+                                      }
+                                    });
+                                  });
                                 },
-                                child: Text(trackingController.daftarDonatur.value?.data[i].tanggal ?? '00:00:0000')),
+                                child: Text(trackingController.daftarDonatur.value?.data[i].tanggal ?? '00:00:0000', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold))
+                                ),
                               )),
                               // H
                               DataCell(
-                                CupertinoButton(
-                                  padding: EdgeInsets.zero,
-                                  onPressed: (){},
-                                  child: Icon(trackingController.daftarDonatur.value?.data[i].h == true ? Icons.notifications_active : Icons.notifications_active_outlined, color: GlobalVariable.secondaryColor)
+                                Obx(() => CupertinoButton(
+                                    padding: EdgeInsets.zero,
+                                    onPressed: trackingController.daftarDonatur.value?.data[i].h == true ? (){
+                                      Get.snackbar("Gagal", "Anda sudah mengirim notifikasi H sebelumnya pada donatur", backgroundColor: Colors.red, colorText: Colors.white);
+                                    } : () {
+                                      showAlertDialog(context, content: "Apakah anda yakin mengirim notifikasi status H ke donatur ${trackingController.daftarDonatur.value?.data[i].name}?", title: "Kirim Notifikasi", onOK: () async {
+                                        Navigator.pop(context);
+                                        await trackingController.postNotification(donaturID: trackingController.daftarDonatur.value?.data[i].id, jadwaID: trackingController.daftarDonatur.value?.data[i].jadwal, type: 'h').then((value){
+                                          if(value){
+                                            Get.snackbar("Berhasil", "Berhasil mengirim notifikasi ke telegram ${trackingController.daftarDonatur.value?.data[i].name}", backgroundColor: Colors.green, colorText: Colors.white);
+                                            trackingController.getListDonatur(date: tanggalController.text, ruteID: ruteID.value, type: dropdownTipe.value.toLowerCase()).then((result){
+                                              if(result){
+                                                showDataTable(true);
+                                              }else{
+                                                showDataTable(false);
+                                              }
+                                            });
+                                          }else{
+                                            Get.snackbar("Gagal", "Gagal mengirim notifikasi ke telegram ${trackingController.daftarDonatur.value?.data[i].name}", backgroundColor: Colors.red, colorText: Colors.white);
+                                          }
+                                        });
+                                      });
+                                    },
+                                    child: Icon(trackingController.daftarDonatur.value?.data[i].h == true ? Icons.notifications_active : Icons.notifications_active_outlined, color: GlobalVariable.secondaryColor, size: 19)
+                                  ),
                                 )
                               ),
                               // H-1
                               DataCell(
-                                CupertinoButton(
-                                  padding: EdgeInsets.zero,
-                                  onPressed: (){},
-                                  child: Icon(trackingController.daftarDonatur.value?.data[i].h1 == true ? Icons.notifications_active : Icons.notifications_active_outlined, color: GlobalVariable.secondaryColor)
+                                Obx(() => CupertinoButton(
+                                    padding: EdgeInsets.zero,
+                                    onPressed: trackingController.daftarDonatur.value?.data[i].h1 == true ? (){
+                                      Get.snackbar("Gagal", "Anda sudah mengirim notifikasi H-1 sebelumnya pada donatur", backgroundColor: Colors.red, colorText: Colors.white);
+                                    } : (){
+                                      showAlertDialog(context, content: "Apakah anda yakin mengirim notifikasi status H-1 ke donatur ${trackingController.daftarDonatur.value?.data[i].name}?", title: "Kirim Notifikasi", onOK: () async {
+                                        Navigator.pop(context);
+                                        await trackingController.postNotification(donaturID: trackingController.daftarDonatur.value?.data[i].id, jadwaID: trackingController.daftarDonatur.value?.data[i].jadwal, type: 'h1').then((value){
+                                          if(value){
+                                            Get.snackbar("Berhasil", "Berhasil mengirim notifikasi ke telegram ${trackingController.daftarDonatur.value?.data[i].name}", backgroundColor: Colors.green, colorText: Colors.white);
+                                            trackingController.getListDonatur(date: tanggalController.text, ruteID: ruteID.value, type: dropdownTipe.value.toLowerCase()).then((result){
+                                              if(result){
+                                                showDataTable(true);
+                                              }else{
+                                                showDataTable(false);
+                                              }
+                                            });
+                                          }else{
+                                            Get.snackbar("Gagal", "Gagal mengirim notifikasi ke telegram ${trackingController.daftarDonatur.value?.data[i].name}", backgroundColor: Colors.red, colorText: Colors.white);
+                                          }
+                                        });
+                                      });
+                                    },
+                                    child: Icon(trackingController.daftarDonatur.value?.data[i].h1 == true ? Icons.notifications_active : Icons.notifications_active_outlined, color: GlobalVariable.secondaryColor, size: 19)
+                                  ),
                                 )
                               ),
                               // H-2
                               DataCell(
-                                CupertinoButton(
-                                  padding: EdgeInsets.zero,
-                                  onPressed: (){},
-                                  child: Icon(trackingController.daftarDonatur.value?.data[i].h2 == true ? Icons.notifications_active : Icons.notifications_active_outlined, color: GlobalVariable.secondaryColor)
+                                Obx(() => CupertinoButton(
+                                    padding: EdgeInsets.zero,
+                                    onPressed: trackingController.daftarDonatur.value?.data[i].h2 == true ? (){
+                                      Get.snackbar("Gagal", "Anda sudah mengirim notifikasi H-2 sebelumnya pada donatur", backgroundColor: Colors.red, colorText: Colors.white);
+                                      } : (){
+                                      showAlertDialog(context, content: "Apakah anda yakin mengirim notifikasi status H-2 ke donatur ${trackingController.daftarDonatur.value?.data[i].name}?", title: "Kirim Notifikasi", onOK: () async {
+                                        Navigator.pop(context);
+                                        await trackingController.postNotification(donaturID: trackingController.daftarDonatur.value?.data[i].id, jadwaID: trackingController.daftarDonatur.value?.data[i].jadwal, type: 'h2').then((value){
+                                          if(value){
+                                            Get.snackbar("Berhasil", "Berhasil mengirim notifikasi ke telegram ${trackingController.daftarDonatur.value?.data[i].name}", backgroundColor: Colors.green, colorText: Colors.white);
+                                            trackingController.getListDonatur(date: tanggalController.text, ruteID: ruteID.value, type: dropdownTipe.value.toLowerCase()).then((result){
+                                              if(result){
+                                                showDataTable(true);
+                                              }else{
+                                                showDataTable(false);
+                                              }
+                                            });
+                                          }else{
+                                            Get.snackbar("Gagal", "Gagal mengirim notifikasi ke telegram ${trackingController.daftarDonatur.value?.data[i].name}", backgroundColor: Colors.red, colorText: Colors.white);
+                                          }
+                                        });
+                                      });
+                                    },
+                                    child: Icon(trackingController.daftarDonatur.value?.data[i].h2 == true ? Icons.notifications_active : Icons.notifications_active_outlined, color: GlobalVariable.secondaryColor, size: 19)
+                                  ),
                                 )
                               ),
                               // Rapel
                               DataCell(
-                                CupertinoButton(
-                                  padding: EdgeInsets.zero,
-                                  onPressed: (){},
-                                  child: Icon(trackingController.daftarDonatur.value?.data[i].rapel == true ? Icons.notifications_active : Icons.notifications_active_outlined, color: GlobalVariable.secondaryColor)
+                                Obx(() => CupertinoButton(
+                                    padding: EdgeInsets.zero,
+                                    onPressed: trackingController.daftarDonatur.value?.data[i].rapel == true ? (){
+                                        Get.snackbar("Gagal", "Anda sudah mengirim notifikasi Rapel sebelumnya pada donatur", backgroundColor: Colors.red, colorText: Colors.white);
+                                      } : (){
+                                      showAlertDialog(context, content: "Apakah anda yakin mengirim notifikasi status Rapel ke donatur ${trackingController.daftarDonatur.value?.data[i].name}?", title: "Kirim Notifikasi", onOK: () async {
+                                        Navigator.pop(context);
+                                        await trackingController.postNotification(donaturID: trackingController.daftarDonatur.value?.data[i].id, jadwaID: trackingController.daftarDonatur.value?.data[i].jadwal, type: 'rapel').then((value){
+                                          if(value){
+                                            Get.snackbar("Berhasil", "Berhasil mengirim notifikasi ke telegram ${trackingController.daftarDonatur.value?.data[i].name}", backgroundColor: Colors.green, colorText: Colors.white);
+                                            trackingController.getListDonatur(date: tanggalController.text, ruteID: ruteID.value, type: dropdownTipe.value.toLowerCase()).then((result){
+                                              if(result){
+                                                showDataTable(true);
+                                              }else{
+                                                showDataTable(false);
+                                              }
+                                            });
+                                          }else{
+                                            Get.snackbar("Gagal", "Gagal mengirim notifikasi ke telegram ${trackingController.daftarDonatur.value?.data[i].name}", backgroundColor: Colors.red, colorText: Colors.white);
+                                          }
+                                        });
+                                      });
+                                    },
+                                    child: Icon(trackingController.daftarDonatur.value?.data[i].rapel == true ? Icons.notifications_active : Icons.notifications_active_outlined, color: GlobalVariable.secondaryColor, size: 19)
+                                  ),
                                 )
                               ),
                               DataCell(
-                                CupertinoButton(
-                                  padding: EdgeInsets.zero,
-                                  onPressed: (){},
-                                  child: Icon(trackingController.daftarDonatur.value?.data[i].jadwalRapel == true ? Icons.notifications_active : Icons.notifications_active_outlined, color: GlobalVariable.secondaryColor)
+                                Obx(() => CupertinoButton(
+                                    padding: EdgeInsets.zero,
+                                    onPressed: trackingController.daftarDonatur.value?.data[i].jadwalRapel == true ? (){
+                                        Get.snackbar("Gagal", "Anda sudah mengirim notifikasi Jadwal Rapel sebelumnya pada donatur", backgroundColor: Colors.red, colorText: Colors.white);
+                                      } : (){
+                                      showAlertDialog(context, content: "Apakah anda yakin mengirim notifikasi status Konfirmasi Rapel ke donatur ${trackingController.daftarDonatur.value?.data[i].name}?", title: "Kirim Notifikasi", onOK: () async {
+                                        Navigator.pop(context);
+                                        await trackingController.postNotification(donaturID: trackingController.daftarDonatur.value?.data[i].id, jadwaID: trackingController.daftarDonatur.value?.data[i].jadwal, type: 'konfirmasi-rapel').then((value){
+                                          if(value){
+                                            Get.snackbar("Berhasil", "Berhasil mengirim notifikasi ke telegram ${trackingController.daftarDonatur.value?.data[i].name}", backgroundColor: Colors.green, colorText: Colors.white);
+                                            trackingController.getListDonatur(date: tanggalController.text, ruteID: ruteID.value, type: dropdownTipe.value.toLowerCase()).then((result){
+                                              if(result){
+                                                showDataTable(true);
+                                              }else{
+                                                showDataTable(false);
+                                              }
+                                            });
+                                          }else{
+                                            Get.snackbar("Gagal", "Gagal mengirim notifikasi ke telegram ${trackingController.daftarDonatur.value?.data[i].name}", backgroundColor: Colors.red, colorText: Colors.white);
+                                          }
+                                        });
+                                      });
+                                    },
+                                    child: Icon(trackingController.daftarDonatur.value?.data[i].jadwalRapel == true ? Icons.notifications_active : Icons.notifications_active_outlined, color: GlobalVariable.secondaryColor, size: 19)
+                                  ),
                                 )
                               ),
                               DataCell(
-                                CupertinoButton(
-                                  padding: EdgeInsets.zero,
-                                  onPressed: (){},
-                                  child: Icon(trackingController.daftarDonatur.value?.data[i].statusPengambilan == true ? Icons.notifications_active : Icons.notifications_active_outlined, color: GlobalVariable.secondaryColor)
+                                Obx(() => CupertinoButton(
+                                    padding: EdgeInsets.zero,
+                                    onPressed: trackingController.daftarDonatur.value?.data[i].statusPengambilan == true ? (){
+                                        Get.snackbar("Gagal", "Anda sudah mengirim notifikasi Status Pengambilan sebelumnya pada donatur", backgroundColor: Colors.red, colorText: Colors.white);
+                                      } : (){
+                                      showAlertDialog(context, content: "Apakah anda yakin mengirim notifikasi status Konfirmasi Penukaran ke donatur ${trackingController.daftarDonatur.value?.data[i].name}?", title: "Kirim Notifikasi", onOK: () async {
+                                        Navigator.pop(context);
+                                        await trackingController.postNotification(donaturID: trackingController.daftarDonatur.value?.data[i].id, jadwaID: trackingController.daftarDonatur.value?.data[i].jadwal, type: 'konfirmasi-penukaran').then((value){
+                                          if(value){
+                                            Get.snackbar("Berhasil", "Berhasil mengirim notifikasi ke telegram ${trackingController.daftarDonatur.value?.data[i].name}", backgroundColor: Colors.green, colorText: Colors.white);
+                                          }else{
+                                            Get.snackbar("Gagal", "Gagal mengirim notifikasi ke telegram ${trackingController.daftarDonatur.value?.data[i].name}", backgroundColor: Colors.red, colorText: Colors.white);
+                                          }
+                                        });
+                                      });
+                                    },
+                                    child: Icon(trackingController.daftarDonatur.value?.data[i].statusPengambilan == true ? Icons.notifications_active : Icons.notifications_active_outlined, color: GlobalVariable.secondaryColor, size: 19)
+                                  ),
+                                )
+                              ),
+                              DataCell(
+                                SizedBox(
+                                  height: 30,
+                                  child: Obx(() => ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: trackingController.daftarDonatur.value?.data[i].h == false ? Colors.grey : GlobalVariable.secondaryColor,
+                                        elevation: 0
+                                      ),
+                                      onPressed: trackingController.daftarDonatur.value?.data[i].h == false ? (){
+                                        Get.snackbar("Gagal", "Anda belum mengirim notifikasi hari H kepada donatur untuk memberitahu bahwa akan ada jadwal pengambilan pada hari ini", backgroundColor: Colors.red, colorText: Colors.white);
+                                      } : (){
+                                        SystemChrome.setPreferredOrientations([
+                                          DeviceOrientation.portraitUp,
+                                          DeviceOrientation.portraitDown
+                                        ]);
+                                        Get.to(() => DetailLokasi(
+                                          code: ruteID.value,
+                                          jadwaID: trackingController.daftarDonatur.value?.data[i].jadwal,
+                                          name: dropdownRute.value,
+                                          latitude: latitudeRute.value,
+                                          longitude: longitudeRute.value,
+                                        ));
+                                      },
+                                      child: Text("Lihat", style: TextStyle(color: trackingController.daftarDonatur.value?.data[i].h == false ? Colors.black : Colors.white))
+                                    ),
+                                  ),
                                 )
                               )
                             ],
@@ -494,7 +688,46 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                   );
                 }
                 return Container();
-              })
+              }),
+
+              const SizedBox(height: 20),
+              Obx(() => showDataTable.value 
+                ? Container(
+                  color: Colors.transparent,
+                  child: Column(
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.notifications_active_outlined, color: GlobalVariable.secondaryColor),
+                          SizedBox(width: 10),
+                          Text("Belum diinformasikan pengambilan kepada donatur")
+                        ],
+                      ),
+                
+                      const Row(
+                        children: [
+                          Icon(Icons.notifications_active, color: GlobalVariable.secondaryColor),
+                          SizedBox(width: 10),
+                          Text("Sudah diinformasikan pengambilan kepada donatur sesuai hari H")
+                        ],
+                      ),
+                
+                      Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 15,
+                            color: Colors.yellow,
+                          ),
+                          const SizedBox(width: 10),
+                          const Text("Status Rapel")
+                        ],
+                      ),
+                    ],
+                  ),
+                ) 
+                : const SizedBox(),
+              )
             ],
           ),
         ),
@@ -502,7 +735,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
     );
   }
 
-  void showAlertDialog(BuildContext contex, {String? title, String? content}) {
+  void showAlertDialog(BuildContext contex, {String? title, String? content, Function()? onOK}) {
     showCupertinoDialog<void>(
       context: context,
       builder: (BuildContext context) => CupertinoAlertDialog(
@@ -518,9 +751,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
           ),
           CupertinoDialogAction(
             isDestructiveAction: true,
-            onPressed: () {
-              Navigator.pop(context);
-            },
+            onPressed: onOK,
             child: const Text('Ya'),
           ),
         ],

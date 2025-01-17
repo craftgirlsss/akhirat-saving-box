@@ -1,16 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:asb_app/src/components/alert/alert_failed.dart';
-import 'package:asb_app/src/components/alert/alert_success.dart';
 import 'package:asb_app/src/components/global/index.dart';
 import 'package:asb_app/src/controllers/auth/auth_controller.dart';
 import 'package:asb_app/src/controllers/tracking/tracking_controller.dart';
-import 'package:asb_app/src/controllers/utilities/alert_dialogs.dart';
 import 'package:asb_app/src/controllers/utilities/location_controller.dart';
-import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/jadwal_saya.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -19,19 +16,15 @@ import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 
-enum Type {
-  masjid,
-  rumah
-}
-
 class DetailLokasi extends StatefulWidget {
   final String? name;
   final String? code;
+  final String? jadwaID;
   final String? subtitle;
+  final String? status;
   final double? latitude;
   final double? longitude;
-  final Type? type;
-  const DetailLokasi({super.key, this.name, this.subtitle, this.latitude, this.longitude, this.type, this.code});
+  const DetailLokasi({super.key, this.name, this.subtitle, this.latitude, this.longitude, this.code, this.jadwaID, this.status});
 
   @override
   State<DetailLokasi> createState() => _DetailLokasiState();
@@ -51,12 +44,13 @@ class _DetailLokasiState extends State<DetailLokasi> {
   double? v2;
   double? v3;
   double? v4;
+  RxBool showTrackRoutes = false.obs;
   var result = "".obs;
   RxString setNameLocationFromLatLong = "".obs;
 
   getDestinationLocation(String destinationName) async {
-    v3 = -7.443653; //Target lokasi latitude
-    v4 = 112.682705; //Target lokasi longitude
+    v3 = widget.latitude; //Target lokasi latitude
+    v4 = widget.longitude; //Target lokasi longitude
 
     v1 = locationController.myLatitude.value;
     v2 = locationController.myLongitude.value;
@@ -85,21 +79,36 @@ class _DetailLokasiState extends State<DetailLokasi> {
   @override
   void initState() {
     super.initState();
-    // getDestinationLocation(locationController.myOfficeLocation.value);
     Future.delayed(const Duration(seconds: 1), (){
-      // print(widget.code);
+      getDestinationLocation(locationController.donaturLocation.value);
       trackingController.checkDetailsOfDonatur(code: widget.code, token: authController.token.value);
+      locationController.getAddressFromLangitudeAndLongitudeForDonatur(latitude: widget.latitude, longitude: widget.longitude);
     });
+  }
+
+  @override
+  void dispose() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight]
+    );
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    LatLng myPlace = LatLng(locationController.myLatitude.value, locationController.myLongitude.value);
+    // LatLng myPlace = LatLng(locationController.myLatitude.value, locationController.myLongitude.value);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         forceMaterialTransparency: true,
+        leading: IconButton(
+          onPressed: (){
+            Navigator.pop(context);
+          }, 
+          icon: const Icon(Iconsax.arrow_left_2_bold, size: 30,)
+        ),
         backgroundColor: Colors.white,
         title: Text(widget.name ?? "Tidak ada nama", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
         centerTitle: true,
@@ -111,20 +120,12 @@ class _DetailLokasiState extends State<DetailLokasi> {
             child: const Icon(Icons.gps_fixed, color: GlobalVariable.secondaryColor), 
             ),
           ),
-
-          CupertinoButton(
-            onPressed: (){
-              Get.to(() => const ScheduleView());
-            },
-            child: const Icon(Clarity.calendar_solid, color: GlobalVariable.secondaryColor), 
-          )
         ],
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            
             Container(
               color: Colors.transparent,
               width: size.width,
@@ -135,7 +136,7 @@ class _DetailLokasiState extends State<DetailLokasi> {
                 child: FlutterMap(
                   mapController: mapController,
                   options: MapOptions(
-                    initialCenter: myPlace, //?? LatLng(widget.latitude, widget.longitude),
+                    initialCenter: LatLng(widget.latitude ?? locationController.myLatitude.value, widget.longitude ?? locationController.myLongitude.value), //?? LatLng(widget.latitude, widget.longitude),
                     initialZoom: 15
                   ),
                   children: [
@@ -145,86 +146,76 @@ class _DetailLokasiState extends State<DetailLokasi> {
                       maxNativeZoom: 19,
                       retinaMode: true,
                     ),
-                    // PolylineLayer(
-                    //   polylines: [
-                    //     Polyline(
-                    //       points: routePoints, color: Colors.blue, strokeWidth: 4, borderColor: Colors.blue.shade800, borderStrokeWidth: 3)
-                    //   ],
-                    // ),
+                    Obx(() => showTrackRoutes.value ? PolylineLayer(
+                        polylines: [
+                          Polyline(
+                            points: routePoints, color: Colors.blue, strokeWidth: 4, borderColor: Colors.blue.shade800, borderStrokeWidth: 3)
+                        ],
+                      ) : const SizedBox(),
+                    ),
                     Obx(() => locationController.isLoading.value 
                       ? Container() 
                       : trackingController.isLoading.value ? Container() :
                       MarkerLayer(
-                        markers: trackingController.detailDonaturModels.value == null ? [] :
-                        List.generate(trackingController.detailDonaturModels.value!.data.rute!.length + 1, (index) {
-                          if(index != trackingController.detailDonaturModels.value?.data.rute?.length){
-                            return Marker(
-                              rotate: true,
-                              alignment: Alignment.center,
-                              width: 100,
-                              point: LatLng(double.parse(trackingController.detailDonaturModels.value!.data.rute![index].lat), double.parse(trackingController.detailDonaturModels.value!.data.rute![index].lng)),
-                              child: Tooltip(
-                                message: trackingController.detailDonaturModels.value!.data.rute?[index].nama ?? "Tidak ada nama",
-                                child: Obx(
-                                  () => InkWell(
-                                    onTap: locationController.isLoading.value ? null : (){
-                                      indexSelected.value = index;
-                                      indexRuteID.value = trackingController.detailDonaturModels.value!.data.rute![index].ruteId;
-                                      indexRuteName.value = trackingController.detailDonaturModels.value!.data.rute![index].nama;
-                                      locationController.getAddressFromLangitudeAndLongitudeV2(
-                                        lat: double.parse(trackingController.detailDonaturModels.value!.data.rute![index].lat),
-                                        long: double.parse(trackingController.detailDonaturModels.value!.data.rute![index].lng)
-                                      ).then((locationName){
-                                        setNameLocationFromLatLong.value = locationName;
-                                      });
-                                      // print(trackingController.detailDonaturModels.value!.data!.rute![index].nama ?? "Tidak ada nama");
-                                    },
-                                    child: Column(
-                                      children: [
-                                        const Icon(Icons.place_rounded, color: Colors.red, size: 15),
-                                        DecoratedBox(
-                                          decoration: const BoxDecoration(color: Colors.black),
-                                          child: Text(trackingController.detailDonaturModels.value!.data.rute?[index].nama ?? "Tidak ada nama", style: const TextStyle(backgroundColor: Colors.black, color: Colors.white, fontSize: 8), textAlign: TextAlign.center),
-                                        ),
-                                        // Expanded(child: Text(trackingController.detailDonaturModels.value!.data!.rute![index].nama ?? "Tidak ada nama", style: const TextStyle(backgroundColor: Colors.black, color: Colors.white, fontSize: 8), textAlign: TextAlign.center,))
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          }
-                          return Marker(
+                        // markers: trackingController.detailDonaturModels.value == null ? [] :
+                        // List.generate(trackingController.detailDonaturModels.value!.data.rute!.length + 1, (index) {
+                        //   if(index != trackingController.detailDonaturModels.value?.data.rute?.length){
+                        //     return Marker(
+                        //       rotate: true,
+                        //       alignment: Alignment.center,
+                        //       width: 100,
+                        //       point: LatLng(double.parse(trackingController.detailDonaturModels.value!.data.rute![index].lat), double.parse(trackingController.detailDonaturModels.value!.data.rute![index].lng)),
+                        //       child: Tooltip(
+                        //         message: trackingController.detailDonaturModels.value!.data.rute?[index].nama ?? "Tidak ada nama",
+                        //         child: Obx(
+                        //           () => InkWell(
+                        //             onTap: locationController.isLoading.value ? null : (){
+                        //               indexSelected.value = index;
+                        //               indexRuteID.value = trackingController.detailDonaturModels.value!.data.rute![index].ruteId;
+                        //               indexRuteName.value = trackingController.detailDonaturModels.value!.data.rute![index].nama;
+                        //               locationController.getAddressFromLangitudeAndLongitudeV2(
+                        //                 lat: double.parse(trackingController.detailDonaturModels.value!.data.rute![index].lat),
+                        //                 long: double.parse(trackingController.detailDonaturModels.value!.data.rute![index].lng)
+                        //               ).then((locationName){
+                        //                 setNameLocationFromLatLong.value = locationName;
+                        //               });
+                        //               // print(trackingController.detailDonaturModels.value!.data!.rute![index].nama ?? "Tidak ada nama");
+                        //             },
+                        //             child: Column(
+                        //               children: [
+                        //                 const Icon(Icons.place_rounded, color: Colors.red, size: 15),
+                        //                 DecoratedBox(
+                        //                   decoration: const BoxDecoration(color: Colors.black),
+                        //                   child: Text(trackingController.detailDonaturModels.value!.data.rute?[index].nama ?? "Tidak ada nama", style: const TextStyle(backgroundColor: Colors.black, color: Colors.white, fontSize: 8), textAlign: TextAlign.center),
+                        //                 ),
+                        //                 // Expanded(child: Text(trackingController.detailDonaturModels.value!.data!.rute![index].nama ?? "Tidak ada nama", style: const TextStyle(backgroundColor: Colors.black, color: Colors.white, fontSize: 8), textAlign: TextAlign.center,))
+                        //               ],
+                        //             ),
+                        //           ),
+                        //         ),
+                        //       ),
+                        //     );
+                        //   }
+                        //   return Marker(
+                        //     rotate: true,
+                        //     point: LatLng(locationController.myLatitude.value, locationController.myLongitude.value),
+                        //     child: const Icon(Icons.place_rounded, color: Colors.blue)
+                        //   );
+                        // },)
+                        
+                        markers: [
+                          Marker(
                             rotate: true,
-                            point: LatLng(locationController.myLatitude.value, locationController.myLongitude.value),
-                            child: const Icon(Icons.place_rounded, color: Colors.blue)
-                          );
-                        },)
-                        /*
-                        [
-                          const Marker(
-                            rotate: true,
-                            point: LatLng(-7.443653, 112.682705),
-                            child: Icon(Icons.place_rounded, color: Colors.red)
+                            point: LatLng(widget.latitude!, widget.longitude!),
+                            child: const Icon(Icons.place_rounded, color: Colors.red)
                           ),
                           Marker(
                             rotate: true,
                             point: LatLng(locationController.myLatitude.value, locationController.myLongitude.value),
-                            child: Container(
-                              width: 10,
-                              height: 10,
-                              decoration: BoxDecoration(
-                                boxShadow: const [
-                                  BoxShadow(color: Colors.black54, blurRadius: 10)
-                                ],
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2),
-                                color: Colors.indigo
-                              ),
-                            )
+                            child: const Icon(FontAwesome.person_running_solid, color: Colors.black, fill: 0.4, grade: 3)
                           ),
                         ]
-                        */
+                        
                       ),
                     )
                   ]
@@ -270,24 +261,29 @@ class _DetailLokasiState extends State<DetailLokasi> {
               } 
             ),
 
-            Obx(() {
-              if(trackingController.detailDonaturModels.value?.data.rute?.length == 0){
-                return const SizedBox();
-              }
+            // Obx(() {
+            //   if(trackingController.detailDonaturModels.value?.data.rute?.length == 0){
+            //     return const SizedBox();
+            //   }
 
-              if(indexSelected.value == -1){
-                return ListTile(
-                  leading: const Icon(Icons.location_on, color: GlobalVariable.secondaryColor),
-                  title: Text(widget.name ?? "Tidak ada nama", style: GoogleFonts.poppins(color: Colors.black54, fontWeight: FontWeight.bold)),
-                  subtitle: Obx(() => Text(setNameLocationFromLatLong.value != "" ? setNameLocationFromLatLong.value : widget.subtitle!, style: const TextStyle(fontSize: 10, color: Colors.black54))),
-                );
-              }
-              return ListTile(
-                leading: const Icon(Icons.location_on, color: GlobalVariable.secondaryColor),
-                title: Text(trackingController.detailDonaturModels.value?.data.rute?[indexSelected.value].nama ?? "Tidak ada nama", style: GoogleFonts.poppins(color: Colors.black54, fontWeight: FontWeight.bold)),
-                subtitle: Obx(() => Text(setNameLocationFromLatLong.value != "" ? setNameLocationFromLatLong.value : widget.subtitle!, style: const TextStyle(fontSize: 10, color: Colors.black54))),
-              );
-            } 
+            //   if(indexSelected.value == -1){
+            //     return ListTile(
+            //       leading: const Icon(Icons.location_on, color: GlobalVariable.secondaryColor),
+            //       title: Text(widget.name ?? "Tidak ada nama", style: GoogleFonts.poppins(color: Colors.black54, fontWeight: FontWeight.bold)),
+            //       subtitle: Obx(() => Text(setNameLocationFromLatLong.value != "" ? setNameLocationFromLatLong.value : widget.subtitle!, style: const TextStyle(fontSize: 10, color: Colors.black54))),
+            //     );
+            //   }
+            //   return ListTile(
+            //     leading: const Icon(Icons.location_on, color: GlobalVariable.secondaryColor),
+            //     title: Text(trackingController.detailDonaturModels.value?.data.rute?[indexSelected.value].nama ?? "Tidak ada nama", style: GoogleFonts.poppins(color: Colors.black54, fontWeight: FontWeight.bold)),
+            //     subtitle: Obx(() => Text(setNameLocationFromLatLong.value != "" ? setNameLocationFromLatLong.value : widget.subtitle!, style: const TextStyle(fontSize: 10, color: Colors.black54))),
+            //   );
+            // } 
+            // ),
+            ListTile(
+              leading: const Icon(Icons.place, color: GlobalVariable.secondaryColor),
+              title: Text("Lokasi Donatur", style: GoogleFonts.poppins(color: Colors.black54, fontWeight: FontWeight.bold)),
+              subtitle: Obx(() => Text(locationController.donaturLocation.value, style: const TextStyle(fontSize: 10, color: Colors.black54))),
             ),
             ListTile(
               leading: const Icon(Icons.my_location_rounded, color: GlobalVariable.secondaryColor),
@@ -339,37 +335,34 @@ class _DetailLokasiState extends State<DetailLokasi> {
           return Obx(() => ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: indexSelected.value > -1 ? Colors.green : GlobalVariable.secondaryColor,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)
-                ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               onPressed: trackingController.isLoading.value ? (){} : (){
-                if(indexSelected.value < 0){
-                  showAlertDialogOnlyYes(context, title: "Gagal", content: "Anda belum memilih lokasi pengambilan. Mohon pilih salah satu marker icon di map untuk memilih lokasi pengambilan.");
-                }else{
-                  showAlertDialogYesOrNo(context, title: "Ambil Rute", content: "Apakah anda yakin mengambil rute ${indexRuteName.value}", onPressed: () async {
-                    Navigator.pop(context);
-                    if(await trackingController.konfirmasiPengambilanRute(kodeRute: indexRuteID.value)){
-                      alertSuccess(context, title: "Berhasil", content: "Berhasil memilih lokasi ${indexRuteName.value}");
-                    }else{
-                      alertFailed(context, title: "Gagal", content: trackingController.responseMessage.value);
-                    }
-                  });
-                }
+                trackingController.konfirmasiPengambilanRute(
+                  jadwaID: widget.jadwaID
+                ).then((value){
+                  if(value){
+                    showTrackRoutes(true);
+                    Get.snackbar("Berhasil", "Berhasil mengarahkan ke rute", backgroundColor: Colors.green, colorText: Colors.white);
+                  }else{
+                    Get.snackbar("Gagal", "Gagal mengarahkan ke rute", backgroundColor: Colors.green, colorText: Colors.white);
+                  }
+                });
               }, 
               child: Obx(() {
-                if(trackingController.isLoading.value){
-                  const SizedBox(
-                    width: 10,
-                    height: 10,
-                    child: CircularProgressIndicator(color: Colors.white)
-                  );
-                }
-                if(indexSelected.value == -1){
-                  return const Text("Mohon Pilih tempat", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold));
-                }else{
-                  return const Text("Ambil Tempat!", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold));
-                }
+                return const Text("Mulai perjalanan", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold));
+                // if(trackingController.isLoading.value){
+                //   const SizedBox(
+                //     width: 10,
+                //     height: 10,
+                //     child: CircularProgressIndicator(color: Colors.white)
+                //   );
+                // }
+                // if(indexSelected.value == -1){
+                //   return const Text("Mohon Pilih tempat", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold));
+                // }else{
+                //   return const Text("Ambil Tempat!", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold));
+                // }
               })
             ),
           );

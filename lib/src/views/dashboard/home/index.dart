@@ -1,6 +1,7 @@
 import 'package:asb_app/src/components/global/index.dart';
 import 'package:asb_app/src/components/textsyle/index.dart';
 import 'package:asb_app/src/controllers/auth/auth_controller.dart';
+import 'package:asb_app/src/controllers/utilities/location_controller.dart';
 import 'package:asb_app/src/controllers/utilities/timeline_controller.dart';
 import 'package:asb_app/src/views/dashboard/home/invoice_page.dart';
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/cek_keberangkatan.dart';
@@ -29,6 +30,7 @@ class _DashboardTrainerState extends State<DashboardTrainer> {
   bool isErrorOccured = false;
   TimelineController controller = Get.put(TimelineController());
   DateTime now = DateTime.now();
+  LocationController locationController = Get.put(LocationController());
 
   Color getRandomColor(){
     return Color((math.Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(0.85);

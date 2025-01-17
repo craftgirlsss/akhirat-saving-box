@@ -8,7 +8,7 @@ class LocationController extends GetxController {
   var wasSelfieAsFirst = false.obs;
   var isLoading = false.obs;
   var myLocation = "".obs;
-  var myOfficeLocation = "".obs;
+  var donaturLocation = "".obs;
   var myLatitude = RxDouble(0);
   var myLongitude = RxDouble(0);
   var distanceBetweenMeAndOffice = 0.obs;
@@ -55,20 +55,20 @@ class LocationController extends GetxController {
     }
   }
 
-  Future<String> getAddressFromLangitudeAndLongitudeV2({double? lat, double? long}) async {
+  Future<String> getAddressFromLangitudeAndLongitudeForDonatur({double? latitude, double? longitude}) async {
     try {
       List<Placemark> placemarkList = await placemarkFromCoordinates(
-        lat ?? 0.0,
-        long ?? 0.0,
+        latitude ?? 0,
+        longitude ?? 0,
       );
       if(placemarkList.isNotEmpty){
         Placemark place = placemarkList[0];
-        return "${place.subLocality}, ${place.locality}, ${place.subAdministrativeArea}, ${place.administrativeArea}, ${place.postalCode}, ${place.country}";
+        return donaturLocation.value = "${place.subLocality}, ${place.locality}, ${place.subAdministrativeArea}, ${place.administrativeArea}, ${place.postalCode}, ${place.country}";
       }
-      return "Failed to get Location";
+      return donaturLocation.value = "failed_get_location".tr;
     } catch (e) {
       if(kDebugMode) print(e.toString());
-      return "Failed to get Location";
+      return donaturLocation.value = "failed_get_location".tr;
     }
   }
 
