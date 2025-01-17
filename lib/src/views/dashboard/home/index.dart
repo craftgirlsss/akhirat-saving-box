@@ -4,7 +4,6 @@ import 'package:asb_app/src/controllers/auth/auth_controller.dart';
 import 'package:asb_app/src/controllers/utilities/timeline_controller.dart';
 import 'package:asb_app/src/views/dashboard/home/invoice_page.dart';
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/cek_keberangkatan.dart';
-import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/daftar_lokasi_tagihan_v2.dart';
 import 'package:asb_app/src/views/dashboard/profiles/index.dart';
 import 'package:asb_app/src/views/dashboard/profiles/notification_pages.dart';
 import 'package:flutter/cupertino.dart';

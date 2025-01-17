@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:asb_app/src/components/global/index.dart';
 import 'package:asb_app/src/controllers/auth/auth_controller.dart';
+import 'package:asb_app/src/models/daftar_donatur_models.dart';
 import 'package:asb_app/src/models/detail_donatur_models.dart';
+import 'package:asb_app/src/models/rute_models.dart';
 import 'package:asb_app/src/models/tempat_pengambilan_models.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -12,8 +14,73 @@ class TrackingController extends GetxController {
   RxString responseMessage = "".obs;
   RxBool wasSelfieAsFirst = false.obs;
   AuthController authController = Get.put(AuthController());
+  Rxn<RuteModels> ruteModels = Rxn<RuteModels>();
+  Rxn<DaftarDonaturModels> daftarDonatur = Rxn<DaftarDonaturModels>();
   Rxn<TempatPengambilanModels> tempatPengambilanModels = Rxn<TempatPengambilanModels>();
   Rxn<DetailDonaturModels> detailDonaturModels = Rxn<DetailDonaturModels>();
+
+  Future<bool> getRute() async {
+    try {
+      isLoading(true);
+      http.Response response = await http.get(
+        Uri.tryParse("${GlobalVariable.mainURL}/list-rute?user=${authController.token.value}")!,
+        headers: {
+          'x-api-key': GlobalVariable.apiKey,
+        }
+      );
+
+      var result = jsonDecode(response.body);
+      isLoading(false);
+      if (response.statusCode == 200) {
+        if(result['success']) {
+          ruteModels.value = RuteModels.fromJson(result);
+          responseMessage.value = result['message'];
+          return true;
+        }
+        responseMessage.value = result['message'];
+        return false;
+      } else {
+        responseMessage.value = result['message'];
+        return false;
+      }
+    } catch (e) {
+      isLoading(false);
+      responseMessage.value = e.toString();
+      return false;
+    }
+  }
+
+  Future<bool> getListDonatur({String? ruteID, String? date}) async {
+    try {
+      isLoading(true);
+      http.Response response = await http.get(
+        Uri.tryParse("${GlobalVariable.mainURL}/list-donatur?user=${authController.token.value}&rute_id=$ruteID&type=semua&bulan=$date")!,
+        headers: {
+          'x-api-key': GlobalVariable.apiKey,
+        }
+      );
+
+      var result = jsonDecode(response.body);
+      isLoading(false);
+      if (response.statusCode == 200) {
+        if(result['success']) {
+          tempatPengambilanModels.value = TempatPengambilanModels.fromJson(result);
+          responseMessage.value = result['message'];
+          daftarDonatur.value = DaftarDonaturModels.fromJson(result);
+          return true;
+        }
+        responseMessage.value = result['message'];
+        return false;
+      } else {
+        responseMessage.value = result['message'];
+        return false;
+      }
+    } catch (e) {
+      isLoading(false);
+      responseMessage.value = e.toString();
+      return false;
+    }
+  }
   
 
   Future<bool> getListTempatPengambilan() async {

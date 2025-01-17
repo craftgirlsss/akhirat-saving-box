@@ -1,8 +1,6 @@
 import 'dart:io';
-
 import 'package:asb_app/src/components/global/index.dart';
 import 'package:asb_app/src/controllers/tracking/tracking_controller.dart';
-import 'package:asb_app/src/controllers/utilities/alert_dialogs.dart';
 import 'package:asb_app/src/controllers/utilities/location_controller.dart';
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/cek_keberangkatan.dart';
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/detail_lokasi.dart';
@@ -28,9 +26,11 @@ class _DaftarLokasiTagihanState extends State<DaftarLokasiTagihan> {
   @override
   void initState() {
     super.initState();
-    trackingController.getListTempatPengambilan();
-    trackingController.checkingSelfFirst().then((value){
-      trackingController.wasSelfieAsFirst.value = value;
+    Future.delayed(const Duration(seconds: 1), (){
+      trackingController.getListTempatPengambilan();
+      trackingController.checkingSelfFirst().then((value){
+        trackingController.wasSelfieAsFirst.value = value;
+      });
     });
   }
 
@@ -97,12 +97,12 @@ class _DaftarLokasiTagihanState extends State<DaftarLokasiTagihan> {
                         name: trackingController.tempatPengambilanModels.value?.data?[i].name ?? "Nama tempat tidak ada", 
                         subtitle: trackingController.tempatPengambilanModels.value?.data?[i].address ?? "Nama tempat tidak diketahui"));
                     } : (){
-                      // Get.to(() => DetailLokasi(
-                      //   code: trackingController.tempatPengambilanModels.value?.data?[i].code,
-                      //   type: Type.masjid,
-                      //   name: trackingController.tempatPengambilanModels.value?.data?[i].name ?? "Nama tempat tidak ada", 
-                      //   subtitle: trackingController.tempatPengambilanModels.value?.data?[i].address ?? "Nama tempat tidak diketahui"));
-                      showAlertDialogOnlyYes(context, title: "Gagal", content: "Anda belum melakukan pengambilan gambar diri sendiri untuk memulai pengambilan kotak, silahkan klik tombol kamera pada pojok kanan atas. Mohon foto selfi dengan perlengkapan lengkap sesuai aturan yang berlaku.");
+                      Get.to(() => DetailLokasi(
+                        code: trackingController.tempatPengambilanModels.value?.data?[i].code,
+                        type: Type.masjid,
+                        name: trackingController.tempatPengambilanModels.value?.data?[i].name ?? "Nama tempat tidak ada", 
+                        subtitle: trackingController.tempatPengambilanModels.value?.data?[i].address ?? "Nama tempat tidak diketahui"));
+                      // showAlertDialogOnlyYes(context, title: "Gagal", content: "Anda belum melakukan pengambilan gambar diri sendiri untuk memulai pengambilan kotak, silahkan klik tombol kamera pada pojok kanan atas. Mohon foto selfi dengan perlengkapan lengkap sesuai aturan yang berlaku.");
                     },
                     title: trackingController.tempatPengambilanModels.value?.data?[i].name ?? "Nama tempat tidak ada",
                     subtitle: trackingController.tempatPengambilanModels.value?.data?[i].available != null ? "${trackingController.tempatPengambilanModels.value?.data?[i].available} tempat belum diambil" : "Nama tempat tidak diketahui",

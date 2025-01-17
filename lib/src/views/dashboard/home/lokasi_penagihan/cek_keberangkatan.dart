@@ -38,35 +38,37 @@ class _CekKeberangkatanState extends State<CekKeberangkatan> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    return GestureDetector(
-      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          title: const Text("Cek Kelengkapan", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-          actions: [
-            CupertinoButton(
-              onPressed: (){
-                Get.defaultDialog(
-                  title: "Informasi",
-                  barrierDismissible: false,
-                  middleText: "Sebelum melakukan keberangkatan, anda diwajibkan untuk melaporkan seluruh persiapan sesuai SOP yang telah ditentukan. Terimakasih",
-                  backgroundColor: Colors.green,
-                  titleStyle: const TextStyle(color: Colors.white),
-                  middleTextStyle: const TextStyle(color: Colors.white),
-                  buttonColor: Colors.white,
-                  textConfirm: "Paham",
-                  confirmTextColor: Colors.green,
-                  onConfirm: (){
-                    Navigator.pop(context);
-                  }
-                );
-              },
-              child: const Icon(CupertinoIcons.info, color: GlobalVariable.secondaryColor), 
-            )
-          ],
-        ),
-        body: SingleChildScrollView(
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text("Cek Kelengkapan", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+        actions: [
+          CupertinoButton(
+            onPressed: (){
+              Get.defaultDialog(
+                title: "Informasi",
+                barrierDismissible: false,
+                middleText: "Sebelum melakukan keberangkatan, anda diwajibkan untuk melaporkan seluruh persiapan sesuai SOP yang telah ditentukan. Terimakasih",
+                backgroundColor: Colors.green,
+                titleStyle: const TextStyle(color: Colors.white),
+                middleTextStyle: const TextStyle(color: Colors.white),
+                buttonColor: Colors.white,
+                textConfirm: "Paham",
+                confirmTextColor: Colors.green,
+                onConfirm: (){
+                  Navigator.pop(context);
+                }
+              );
+            },
+            child: const Icon(CupertinoIcons.info, color: GlobalVariable.secondaryColor), 
+          )
+        ],
+      ),
+      body: GestureDetector(
+        onTap: () {
+          FocusManager.instance.primaryFocus?.unfocus();
+        },
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 5),
           physics: const BouncingScrollPhysics(),
           child: Center(
@@ -162,7 +164,7 @@ class _CekKeberangkatanState extends State<CekKeberangkatan> {
                     ],
                   ),
                 ),
-      
+            
                 // TextField
                 SizedBox(
                   height: size.width,
@@ -190,32 +192,32 @@ class _CekKeberangkatanState extends State<CekKeberangkatan> {
             ),
           ),
         ),
-        bottomNavigationBar: Padding(
-          padding: const EdgeInsets.all(15),
-          child: Obx(() => CupertinoButton(
-              borderRadius: BorderRadius.circular(50),
-              color: GlobalVariable.secondaryColor,
-              onPressed: trackingController.isLoading.value ? (){} : () async {
-                Get.to(() => const DaftarLokasiTagihanv2());
-                // if(urlPhotoHelm.value == "" || urlPhotoMotor.value == "" || urlPhotoSepatu.value == ""){
-                //   Get.snackbar("Gagal", "Mohon isikan semua foto keberangkatan", backgroundColor: Colors.red, colorText: Colors.white);
-                // }else{
-                //   if(await trackingController.postCheckingSelfFirst(
-                //     description: notesController.text, 
-                //     urlImage1: urlPhotoHelm.value,
-                //     urlImage2: urlPhotoSepatu.value,
-                //     urlImage3: urlPhotoMotor.value
-                //   )){
-                //     trackingController.wasSelfieAsFirst.value = true;
-                //     Get.snackbar("Berhasil", "Berhasil upload foto keberangkatan", backgroundColor: Colors.green, colorText: Colors.white);
-                //     Future.delayed(const Duration(seconds: 2), (){
-                //       Get.to(() => const DaftarLokasiTagihanv2());
-                //     });
-                //   }
-                // }
-              },
-              child: Obx(() => trackingController.isLoading.value ? const Padding(padding: EdgeInsets.all(2), child: CircularProgressIndicator(color: Colors.white)) : const Text("Submit")), 
-            ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(15),
+        child: Obx(() => CupertinoButton(
+            borderRadius: BorderRadius.circular(50),
+            color: GlobalVariable.secondaryColor,
+            onPressed: trackingController.isLoading.value ? (){} : () async {
+              Get.to(() => const DaftarLokasiTagihanv2());
+              // if(urlPhotoHelm.value == "" || urlPhotoMotor.value == "" || urlPhotoSepatu.value == ""){
+              //   Get.snackbar("Gagal", "Mohon isikan semua foto keberangkatan", backgroundColor: Colors.red, colorText: Colors.white);
+              // }else{
+              //   if(await trackingController.postCheckingSelfFirst(
+              //     description: notesController.text, 
+              //     urlImage1: urlPhotoHelm.value,
+              //     urlImage2: urlPhotoSepatu.value,
+              //     urlImage3: urlPhotoMotor.value
+              //   )){
+              //     trackingController.wasSelfieAsFirst.value = true;
+              //     Get.snackbar("Berhasil", "Berhasil upload foto keberangkatan", backgroundColor: Colors.green, colorText: Colors.white);
+              //     Future.delayed(const Duration(seconds: 2), (){
+              //       Get.to(() => const DaftarLokasiTagihanv2());
+              //     });
+              //   }
+              // }
+            },
+            child: Obx(() => trackingController.isLoading.value ? const Padding(padding: EdgeInsets.all(2), child: CircularProgressIndicator(color: Colors.white)) : const Text("Submit")), 
           ),
         ),
       ),
