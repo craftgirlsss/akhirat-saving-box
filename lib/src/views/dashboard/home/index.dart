@@ -1,10 +1,12 @@
 import 'package:asb_app/src/components/global/index.dart';
 import 'package:asb_app/src/components/textsyle/index.dart';
 import 'package:asb_app/src/controllers/auth/auth_controller.dart';
+import 'package:asb_app/src/controllers/tracking/tracking_controller.dart';
 import 'package:asb_app/src/controllers/utilities/location_controller.dart';
 import 'package:asb_app/src/controllers/utilities/timeline_controller.dart';
 import 'package:asb_app/src/views/dashboard/home/invoice_page.dart';
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/cek_keberangkatan.dart';
+import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/daftar_lokasi_tagihan_v2.dart';
 import 'package:asb_app/src/views/dashboard/profiles/index.dart';
 import 'package:asb_app/src/views/dashboard/profiles/notification_pages.dart';
 import 'package:flutter/cupertino.dart';
@@ -28,9 +30,11 @@ class _DashboardTrainerState extends State<DashboardTrainer> {
   final globalVariable = GlobalVariable();
   final globalTextStyle = GlobalTextStyle();
   bool isErrorOccured = false;
+  RxBool wasSelfieAsFirst = false.obs;
   TimelineController controller = Get.put(TimelineController());
   DateTime now = DateTime.now();
   LocationController locationController = Get.put(LocationController());
+  TrackingController trackingController = Get.put(TrackingController());
 
   Color getRandomColor(){
     return Color((math.Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(0.85);
@@ -94,6 +98,18 @@ class _DashboardTrainerState extends State<DashboardTrainer> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    Future.delayed(Duration.zero, (){
+      trackingController.checkingSelfFirst().then((result){
+        if(result){
+          wasSelfieAsFirst(true);
+        }
+      });
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     return Scaffold(
@@ -130,118 +146,120 @@ class _DashboardTrainerState extends State<DashboardTrainer> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(15),
-        child: Column(
-          children: [
-            StaggeredGrid.count(
-              crossAxisCount: 2,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              children: List.generate(dataMenu.length, (i) {
-                return StaggeredGridTile.count(
-                  crossAxisCellCount: 1,
-                  mainAxisCellCount: i.isEven ? 2 : 1,
-                  child: CupertinoContextMenu(
-                    enableHapticFeedback: true,
-                    actions: [
-                      Container(
-                        alignment: Alignment.center,
-                        width: size.width / 2,
-                        padding: const EdgeInsets.all(15),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(15),
-                          color: Colors.white
-                        ),
-                        child: DefaultTextStyle(
-                          style: const TextStyle(color: Colors.black), textAlign: TextAlign.center, overflow: TextOverflow.clip,
-                          child: Text(dataMenu[i]['details']['description'] ?? "Null", 
-                        ),)
-                      ),
-                      // CupertinoContextMenuAction(
-                      //   onPressed: () {
-                      //     Navigator.pop(context);
-                      //   },
-                      //   trailingIcon: CupertinoIcons.heart,
-                      //   child: const Text('Favorite'),
-                      // ),
-                      // CupertinoContextMenuAction(
-                      //   onPressed: () {
-                      //     Navigator.pop(context);
-                      //   },
-                      //   isDestructiveAction: true,
-                      //   trailingIcon: CupertinoIcons.delete,
-                      //   child: const Text('Delete'),
-                      // ),
-                    ],
-                    child: Material(
-                      elevation: 0,
-                      color: Colors.white,
-                      type: MaterialType.card,
-                      borderRadius: BorderRadius.circular(20),
-                      shadowColor: Colors.white,
-                      child: CupertinoButton(
-                        padding: EdgeInsets.zero,
-                        onPressed: (){
-                          if(i == dataMenu.length - 1){
-                            _showAlertDialog(context);
-                          }else{
-                            switch (i) {
-                              case 0:
-                                Get.to(() => const CekKeberangkatan());
-                                break;
-                              case 1:
-                                Get.to(() => const AccountSettings());
-                                break;
-                              case 2:
-                                Get.to(() => const NotificationPages());
-                                break;
-                              case 3:
-                                // Get.to(() => const PerhitunganPerolehan());
-                                break;
-                              default:
-                            }
-                          }
-                        },
-                        child: Container(
-                          constraints: BoxConstraints(
-                            minWidth: size.width / 2,
-                            minHeight: size.width / 2,
-                          ),
+        child: Obx(() => trackingController.isLoading.value ? SizedBox(
+          height: size.height / 1.2,
+          width: size.width,
+          child: const Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: Colors.red,),
+              SizedBox(height: 10),
+              Text("Loading...")
+            ],
+          ),
+        ) : Column(
+            children: [
+              StaggeredGrid.count(
+                crossAxisCount: 2,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                children: List.generate(dataMenu.length, (i) {
+                  return StaggeredGridTile.count(
+                    crossAxisCellCount: 1,
+                    mainAxisCellCount: i.isEven ? 2 : 1,
+                    child: CupertinoContextMenu(
+                      enableHapticFeedback: true,
+                      actions: [
+                        Container(
+                          alignment: Alignment.center,
+                          width: size.width / 2,
                           padding: const EdgeInsets.all(15),
                           decoration: BoxDecoration(
-                            color: dataMenu[i]['details']['color'],
-                            border: Border.all(color: Colors.black12, width: 0.3),
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(15),
+                            color: Colors.white
                           ),
-                          child: Center(child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              dataMenu[i]['details']['icon'],
-                              const SizedBox(height: 5),
-                              Text(dataMenu[i]['details']['nama'], style: globalTextStyle.defaultTextStyleBold(fontSize: 17, color: Colors.white, withShadow: false), textAlign: TextAlign.center, maxLines: 3),
-                            ],
-                          ))
+                          child: DefaultTextStyle(
+                            style: const TextStyle(color: Colors.black), textAlign: TextAlign.center, overflow: TextOverflow.clip,
+                            child: Text(dataMenu[i]['details']['description'] ?? "Null", 
+                          ),)
+                        ),
+                      ],
+                      child: Material(
+                        elevation: 0,
+                        color: Colors.white,
+                        type: MaterialType.card,
+                        borderRadius: BorderRadius.circular(20),
+                        shadowColor: Colors.white,
+                        child: CupertinoButton(
+                          padding: EdgeInsets.zero,
+                          onPressed: (){
+                            if(i == dataMenu.length - 1){
+                              _showAlertDialog(context);
+                            }else{
+                              switch (i) {
+                                case 0:
+                                  if(wasSelfieAsFirst.value){
+                                    Get.to(() => const DaftarLokasiTagihanv2());
+                                  }else{
+                                    Get.to(() => const CekKeberangkatan());
+                                  }
+                                  break;
+                                case 1:
+                                  Get.to(() => const AccountSettings());
+                                  break;
+                                case 2:
+                                  Get.to(() => const NotificationPages());
+                                  break;
+                                case 3:
+                                  // Get.to(() => const PerhitunganPerolehan());
+                                  break;
+                                default:
+                              }
+                            }
+                          },
+                          child: Container(
+                            constraints: BoxConstraints(
+                              minWidth: size.width / 2,
+                              minHeight: size.width / 2,
+                            ),
+                            padding: const EdgeInsets.all(15),
+                            decoration: BoxDecoration(
+                              color: dataMenu[i]['details']['color'],
+                              border: Border.all(color: Colors.black12, width: 0.3),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Center(child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                dataMenu[i]['details']['icon'],
+                                const SizedBox(height: 5),
+                                Text(dataMenu[i]['details']['nama'], style: globalTextStyle.defaultTextStyleBold(fontSize: 17, color: Colors.white, withShadow: false), textAlign: TextAlign.center, maxLines: 3),
+                              ],
+                            ))
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                );
-              })
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(authController.token.value),
-                CupertinoButton(
-                  padding: EdgeInsets.zero,
-                  onPressed: () async {
-                    // await Clipboard.setData(ClipboardData(text: authController.token.value));
-                    Share.share(authController.token.value);
-                  },
-                  child: const Icon(Iconsax.share_bold), 
-                )
-              ],
-            )
-          ],
+                  );
+                })
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(authController.token.value),
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () async {
+                      // await Clipboard.setData(ClipboardData(text: authController.token.value));
+                      Share.share(authController.token.value);
+                    },
+                    child: const Icon(Iconsax.share_bold), 
+                  )
+                ],
+              )
+            ],
+          ),
         ),
       ),
     );

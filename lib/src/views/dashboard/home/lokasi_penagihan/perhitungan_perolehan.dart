@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:asb_app/src/components/alert/alert_success.dart';
 import 'package:asb_app/src/components/global/index.dart';
+import 'package:asb_app/src/controllers/tracking/tracking_controller.dart';
 import 'package:asb_app/src/helpers/currency_formator.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -9,7 +10,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
 class PerhitunganPerolehan extends StatefulWidget {
-  const PerhitunganPerolehan({super.key});
+  final String? ruteName;
+  final String? jadwaID;
+  const PerhitunganPerolehan({super.key, this.ruteName, this.jadwaID});
 
   @override
   State<PerhitunganPerolehan> createState() => _PerhitunganPerolehanState();
@@ -19,6 +22,7 @@ class _PerhitunganPerolehanState extends State<PerhitunganPerolehan> {
   RxList imageProof = [].obs;
   RxInt total = 0.obs;
   RxBool isLoading = false.obs;
+  TrackingController trackingController = Get.find();
 
   TextEditingController counter500 = TextEditingController(text: '0');
   TextEditingController counter1000 = TextEditingController(text: '0');
@@ -72,50 +76,50 @@ class _PerhitunganPerolehanState extends State<PerhitunganPerolehan> {
         body: SingleChildScrollView(
           child: Column(
             children: [
-              Container(
-                color: Colors.transparent,
-                height: size.height / 3,
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: List.generate(imageProof.length + 1, (i) {
-                      if(i != imageProof.length){
-                        return Container(
-                          width: 200,
-                          height: 200,
-                          clipBehavior: Clip.hardEdge,
-                          margin: const EdgeInsets.symmetric(horizontal: 5),
-                          decoration: BoxDecoration(
-                            color: Colors.transparent,
-                            border: Border.all(color: Colors.black45),
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          child: Image.file(File(imageProof[i]), fit: BoxFit.cover,),
-                        );
-                      }
-                      return CupertinoButton(
-                        padding: EdgeInsets.zero,
-                        onPressed: (){
-                          pickImageFromCamera();
-                        },
-                        child: Container(
-                          width: 200,
-                          height: 200,
-                          padding: const EdgeInsets.all(15),
-                          decoration: BoxDecoration(
-                            color: Colors.transparent,
-                            border: Border.all(color: Colors.black26),
-                            borderRadius: BorderRadius.circular(5)
-                          ),
-                          child: const Icon(Icons.add_a_photo, color: Colors.black45),
-                        ),
-                      );
-                    }),
-                  ),
-                ),
-              ),
-              const Divider(),
+              // Container(
+              //   color: Colors.transparent,
+              //   height: size.height / 3,
+              //   child: SingleChildScrollView(
+              //     physics: const BouncingScrollPhysics(),
+              //     scrollDirection: Axis.horizontal,
+              //     child: Row(
+              //       children: List.generate(imageProof.length + 1, (i) {
+              //         if(i != imageProof.length){
+              //           return Container(
+              //             width: 200,
+              //             height: 200,
+              //             clipBehavior: Clip.hardEdge,
+              //             margin: const EdgeInsets.symmetric(horizontal: 5),
+              //             decoration: BoxDecoration(
+              //               color: Colors.transparent,
+              //               border: Border.all(color: Colors.black45),
+              //               borderRadius: BorderRadius.circular(5),
+              //             ),
+              //             child: Image.file(File(imageProof[i]), fit: BoxFit.cover,),
+              //           );
+              //         }
+              //         return CupertinoButton(
+              //           padding: EdgeInsets.zero,
+              //           onPressed: (){
+              //             pickImageFromCamera();
+              //           },
+              //           child: Container(
+              //             width: 200,
+              //             height: 200,
+              //             padding: const EdgeInsets.all(15),
+              //             decoration: BoxDecoration(
+              //               color: Colors.transparent,
+              //               border: Border.all(color: Colors.black26),
+              //               borderRadius: BorderRadius.circular(5)
+              //             ),
+              //             child: const Icon(Icons.add_a_photo, color: Colors.black45),
+              //           ),
+              //         );
+              //       }),
+              //     ),
+              //   ),
+              // ),
+              // const Divider(),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: Table(
@@ -166,18 +170,70 @@ class _PerhitunganPerolehanState extends State<PerhitunganPerolehan> {
               const SizedBox(height: 20),
               SizedBox(
                 width: size.width - 50,
-                child: CupertinoButton(
+                child: Obx(() => CupertinoButton(
                   color: GlobalVariable.secondaryColor,
-                  child: const Text("Submit"), onPressed: (){
-                    alertSuccess(context, title: "Berhasil", content: "Berhasil uplaod foto bukti pengambilan kotak", onOK: (){
-                      Navigator.of(context)..pop()..pop();
-                    });
-                  }),
+                  onPressed: trackingController.isLoading.value ? null : (){
+                    showAlertDialog(
+                      context,
+                      title: "Konfirmasi Perhitungan",
+                      content: "Apaka anda yakin mengkonfirmasi perhitungan perolehan kotak amal ${widget.ruteName}?",
+                      onOK: (){
+                        trackingController.hitungPerolehan(
+                          jadwalID: widget.jadwaID,
+                          perolehan: {
+                            "500": counter500.text,
+                            "1000": counter1000.text,
+                            "2000": counter2000.text,
+                            "5000": counter5000.text,
+                            "10000": counter1000.text,
+                            "20000": counter20000.text,
+                            "50000": counter50000.text,
+                            "100000": counter100000.text
+                          } 
+                        ).then((result) {
+                          if(result){
+                            alertSuccess(context, title: "Berhasil", content: trackingController.responseMessage.value, onOK: (){
+                              Navigator.of(context)..pop()..pop();
+                            });
+                          }else{
+                            Get.snackbar("Gagal", trackingController.responseMessage.value, backgroundColor: Colors.red, colorText: Colors.white);
+                          }
+                        });
+                      }
+                    );
+                  },
+                  child: const Text("Submit"), 
+                  ),
+                ),
               ),
               const SizedBox(height: 30)
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void showAlertDialog(BuildContext contex, {String? title, String? content, Function()? onOK}) {
+    showCupertinoDialog<void>(
+      context: context,
+      builder: (BuildContext context) => CupertinoAlertDialog(
+        title: Text(title ?? 'Akhiri'),
+        content: Text(content ?? 'Apakah anda sudah mendatangi tempat dan menandai telah dihadiri?'),
+        actions: <CupertinoDialogAction>[
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('Tidak'),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: onOK,
+            child: const Text('Ya'),
+          ),
+        ],
       ),
     );
   }

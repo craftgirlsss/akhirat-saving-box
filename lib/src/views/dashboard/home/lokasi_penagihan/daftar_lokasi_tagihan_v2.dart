@@ -506,7 +506,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                                               }
                                             });
                                           }else{
-                                            Get.snackbar("Gagal", "Gagal mengirim notifikasi ke telegram ${trackingController.daftarDonatur.value?.data[i].name}", backgroundColor: Colors.red, colorText: Colors.white);
+                                            Get.snackbar("Gagal", "${trackingController.responseMessage.value} ${trackingController.daftarDonatur.value?.data[i].name}", backgroundColor: Colors.red, colorText: Colors.white);
                                           }
                                         });
                                       });
@@ -656,10 +656,10 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                                   height: 30,
                                   child: Obx(() => ElevatedButton(
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: trackingController.daftarDonatur.value?.data[i].h == false ? Colors.grey : GlobalVariable.secondaryColor,
+                                        backgroundColor: trackingController.daftarDonatur.value?.data[i].h == false && trackingController.daftarDonatur.value?.data[i].status != "4" ? Colors.grey : GlobalVariable.secondaryColor,
                                         elevation: 0
                                       ),
-                                      onPressed: trackingController.daftarDonatur.value?.data[i].h == false ? (){
+                                      onPressed: trackingController.daftarDonatur.value?.data[i].h == false || trackingController.daftarDonatur.value?.data[i].status == "4" ? (){
                                         Get.snackbar("Gagal", "Anda belum mengirim notifikasi hari H kepada donatur untuk memberitahu bahwa akan ada jadwal pengambilan pada hari ini", backgroundColor: Colors.red, colorText: Colors.white);
                                       } : (){
                                         SystemChrome.setPreferredOrientations([
@@ -670,6 +670,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                                           code: ruteID.value,
                                           jadwaID: trackingController.daftarDonatur.value?.data[i].jadwal,
                                           name: dropdownRute.value,
+                                          status: trackingController.daftarDonatur.value?.data[i].status,
                                           latitude: latitudeRute.value,
                                           longitude: longitudeRute.value,
                                         ));

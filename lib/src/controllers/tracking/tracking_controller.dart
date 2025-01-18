@@ -207,7 +207,7 @@ class TrackingController extends GetxController {
   }
 
 
-  Future<bool> konfirmasiPengambilanRute({String? jadwaID}) async {
+  Future<bool> ambilRute({String? jadwaID}) async {
     try {
       isLoading(true);
       http.Response response = await http.post(
@@ -310,4 +310,112 @@ class TrackingController extends GetxController {
       return false;
     }
   }
+
+  Future<bool> batalkanPengambilanRute({String? jadwalID}) async {
+    try {
+      isLoading(true);
+      http.Response response = await http.post(
+        Uri.tryParse("${GlobalVariable.mainURL}/batalkan-rute")!,
+        headers: {
+          'x-api-key': GlobalVariable.apiKey,
+        },
+        body: {
+          'user': authController.token.value,
+          'jadwal': jadwalID,
+        },
+      );
+      var result = jsonDecode(response.body);
+      isLoading(false);
+      if (response.statusCode == 200) {
+        if(result['success']) {
+          responseMessage.value = result['message'];
+          return true;
+        }
+        responseMessage.value = result['message'];
+        return false;
+      } else {
+        responseMessage.value = result['message'];
+        return false;
+      }
+    } catch (e) {
+      isLoading(false);
+      responseMessage.value = e.toString();
+      return false;
+    }
+  }
+
+  Future<bool> selesaiAmbil({String? jadwalID, List<String>? photos}) async {
+    try {
+      isLoading(true);
+      var request = http.MultipartRequest('POST', Uri.parse('${GlobalVariable.mainURL}/konfirmasi-pengambilan'));
+      request.headers.addAll({'x-api-key': GlobalVariable.apiKey});
+      request.fields.addAll({
+        'jadwal': jadwalID ?? '',
+        'user': authController.token.value
+      });
+
+
+      if(photos == null){
+        responseMessage.value = "Image kosong";
+        return false;
+      }else if(photos.isEmpty){
+        responseMessage.value = "Image kurang dari 1";
+        return false;
+      }
+
+      for(int i = 0; i<photos.length; i++){
+        request.files.add(await http.MultipartFile.fromPath('images[]', photos[i], contentType: MediaType('image', 'jpeg')));
+      }
+
+      http.StreamedResponse response = await request.send();
+      jsonDecode(await response.stream.bytesToString());
+      isLoading(false);
+      if (response.statusCode == 200) {
+        responseMessage.value = "Berhasil mengirim gambar";
+        return true;
+      } else {
+        responseMessage.value = "Gagal mengirim gambar";
+        return false;
+      }
+    } catch (e) {
+      isLoading(false);
+      responseMessage.value = e.toString();
+      return false;
+    }
+  }
+
+  Future<bool> hitungPerolehan({String? jadwalID, Map<String, dynamic>? perolehan}) async {
+    try {
+      isLoading(true);
+      http.Response response = await http.post(
+        Uri.tryParse("${GlobalVariable.mainURL}/konfirmasi-perhitungan")!,
+        headers: {
+          'x-api-key': GlobalVariable.apiKey,
+        },
+        body: {
+          'user': authController.token.value,
+          'jadwal': jadwalID,
+          'data': jsonEncode(perolehan)
+        },
+      );
+      var result = jsonDecode(response.body);
+      isLoading(false);
+      if (response.statusCode == 200) {
+        if(result['success']) {
+          responseMessage.value = result['message'];
+          return true;
+        }
+        responseMessage.value = result['message'];
+        return false;
+      } else {
+        responseMessage.value = result['message'];
+        return false;
+      }
+    } catch (e) {
+      isLoading(false);
+      responseMessage.value = e.toString();
+      return false;
+    }
+  }
+  
 }
