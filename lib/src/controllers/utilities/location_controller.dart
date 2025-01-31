@@ -8,6 +8,8 @@ class LocationController extends GetxController {
   var wasSelfieAsFirst = false.obs;
   var isLoading = false.obs;
   var myLocation = "".obs;
+  var myLocationV2 = "".obs;
+  var myProvinsi = "".obs;
   var donaturLocation = "".obs;
   var myLatitude = RxDouble(0);
   var myLongitude = RxDouble(0);
@@ -20,7 +22,10 @@ class LocationController extends GetxController {
   @override
   onInit(){
     super.onInit();
-    getCurrentLocation();
+    isLoading(true);
+    getCurrentLocation().then((result){
+      isLoading(false);
+    });
   }
 
   Future<Position> determinePosition() async {
@@ -46,6 +51,8 @@ class LocationController extends GetxController {
       );
       if(placemarkList.isNotEmpty){
         Placemark place = placemarkList[0];
+        myLocationV2.value = "${place.subLocality}, ${place.locality}";
+        myProvinsi.value =  place.administrativeArea ?? 'Jawa Timur';
         return myLocation.value = "${place.subLocality}, ${place.locality}, ${place.subAdministrativeArea}, ${place.administrativeArea}, ${place.postalCode}, ${place.country}";
       }
       return myLocation.value = "failed_get_location".tr;
@@ -69,6 +76,23 @@ class LocationController extends GetxController {
     } catch (e) {
       if(kDebugMode) print(e.toString());
       return donaturLocation.value = "failed_get_location".tr;
+    }
+  }
+
+  Future<String> getAddressFromCoordinates({double? latitude, double? longitude}) async {
+    try {
+      List<Placemark> placemarkList = await placemarkFromCoordinates(
+        latitude ?? 0,
+        longitude ?? 0,
+      );
+      if(placemarkList.isNotEmpty){
+        Placemark place = placemarkList[0];
+        return "${place.subLocality}, ${place.locality}, ${place.subAdministrativeArea}, ${place.administrativeArea}, ${place.postalCode}, ${place.country}";
+      }
+      return "Gagal mendapatkan lokasi";
+    } catch (e) {
+      if(kDebugMode) print(e.toString());
+      return "$e";
     }
   }
 

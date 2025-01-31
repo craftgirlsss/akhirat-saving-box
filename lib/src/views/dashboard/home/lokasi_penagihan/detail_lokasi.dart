@@ -82,11 +82,6 @@ class _DetailLokasiState extends State<DetailLokasi> {
 
   String setStatus(){
     status.value = widget.status ?? '0';
-    print("Ini status ${status.value}");
-    print("Ini jadwalID ${widget.jadwaID}");
-    print("Ini code ${widget.code}");
-    print("Ini latitude ${widget.latitude}");
-    print("Ini longitude ${widget.longitude}");
     return status.value;
   }
 
@@ -187,7 +182,7 @@ class _DetailLokasiState extends State<DetailLokasi> {
                           Marker(
                             rotate: true,
                             point: LatLng(locationController.myLatitude.value, locationController.myLongitude.value),
-                            child: const Icon(FontAwesome.person_running_solid, color: Colors.black, fill: 0.4, grade: 3)
+                            child: const Icon(CupertinoIcons.map_pin_ellipse, color: Colors.blue, fill: 0.4, grade: 3)
                           ),
                         ]
                       ),
@@ -417,7 +412,7 @@ class _DetailLokasiState extends State<DetailLokasi> {
             }else if(status.value == '3'){
               return ElevatedButton(
                 onPressed: (){
-                  Get.to(() => const PerhitunganPerolehan());
+                  Get.to(() => PerhitunganPerolehan(jadwaID: widget.jadwaID, ruteName: widget.name));
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
@@ -428,7 +423,7 @@ class _DetailLokasiState extends State<DetailLokasi> {
             }else if(status.value == '4'){
               return ElevatedButton(
                 onPressed: (){
-                  Get.to(() => const PerhitunganPerolehan());
+                  Get.to(() => PerhitunganPerolehan(jadwaID: widget.jadwaID, ruteName: widget.name));
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,

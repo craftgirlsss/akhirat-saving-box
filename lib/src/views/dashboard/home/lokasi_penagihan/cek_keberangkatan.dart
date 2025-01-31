@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:asb_app/src/components/global/index.dart';
 import 'package:asb_app/src/controllers/tracking/tracking_controller.dart';
-import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/daftar_lokasi_tagihan_v2.dart';
+import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/menu_hari_h.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -9,7 +9,8 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:image_picker/image_picker.dart';
 
 class CekKeberangkatan extends StatefulWidget {
-  const CekKeberangkatan({super.key});
+  final String? title;
+  const CekKeberangkatan({super.key, this.title});
 
   @override
   State<CekKeberangkatan> createState() => _CekKeberangkatanState();
@@ -42,28 +43,28 @@ class _CekKeberangkatanState extends State<CekKeberangkatan> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Cek Kelengkapan", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-        actions: [
-          CupertinoButton(
-            onPressed: (){
-              Get.defaultDialog(
-                title: "Informasi",
-                barrierDismissible: false,
-                middleText: "Sebelum melakukan keberangkatan, anda diwajibkan untuk melaporkan seluruh persiapan sesuai SOP yang telah ditentukan. Terimakasih",
-                backgroundColor: Colors.green,
-                titleStyle: const TextStyle(color: Colors.white),
-                middleTextStyle: const TextStyle(color: Colors.white),
-                buttonColor: Colors.white,
-                textConfirm: "Paham",
-                confirmTextColor: Colors.green,
-                onConfirm: (){
-                  Navigator.pop(context);
-                }
-              );
-            },
-            child: const Icon(CupertinoIcons.info, color: GlobalVariable.secondaryColor), 
-          )
-        ],
+        title: Text(widget.title ?? "Cek Kelengkapan", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+        // actions: [
+        //   CupertinoButton(
+        //     onPressed: (){
+        //       Get.defaultDialog(
+        //         title: "Informasi",
+        //         barrierDismissible: false,
+        //         middleText: "Sebelum melakukan keberangkatan, anda diwajibkan untuk melaporkan seluruh persiapan sesuai SOP yang telah ditentukan. Terimakasih",
+        //         backgroundColor: Colors.green,
+        //         titleStyle: const TextStyle(color: Colors.white),
+        //         middleTextStyle: const TextStyle(color: Colors.white),
+        //         buttonColor: Colors.white,
+        //         textConfirm: "Paham",
+        //         confirmTextColor: Colors.green,
+        //         onConfirm: (){
+        //           Navigator.pop(context);
+        //         }
+        //       );
+        //     },
+        //     child: const Icon(CupertinoIcons.info, color: GlobalVariable.secondaryColor), 
+        //   )
+        // ],
       ),
       body: GestureDetector(
         onTap: () {
@@ -221,12 +222,12 @@ class _CekKeberangkatanState extends State<CekKeberangkatan> {
                   trackingController.wasSelfieAsFirst.value = true;
                   Get.snackbar("Berhasil", "Berhasil upload foto keberangkatan", backgroundColor: Colors.green, colorText: Colors.white);
                   Future.delayed(const Duration(seconds: 2), (){
-                    Get.to(() => const DaftarLokasiTagihanv2());
+                    Get.offAll(() => const MenuHariH());
                   });
                 }
               }
             },
-            child: Obx(() => trackingController.isLoading.value ? const Padding(padding: EdgeInsets.all(2), child: CircularProgressIndicator(color: Colors.white)) : const Text("Submit")), 
+            child: Obx(() => trackingController.isLoading.value ? const SizedBox(height: 20, child: CircularProgressIndicator(color: Colors.white)) : const Text("Submit")), 
           ),
         ),
       ),

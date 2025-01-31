@@ -1,6 +1,6 @@
 import 'package:asb_app/src/controllers/auth/auth_controller.dart';
+import 'package:asb_app/src/views/mainpage.dart';
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:asb_app/src/views/dashboard/home/index.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -36,25 +36,24 @@ class _SignInState extends State<SignIn> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final orientation = MediaQuery.of(context).orientation;
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
         backgroundColor: Colors.white,
         body: SingleChildScrollView(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-            width: size.width,
-            height: size.height,
+          padding: orientation == Orientation.landscape ? EdgeInsets.symmetric(horizontal: size.width / 4) : const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             child: Form(
               key: _formKey,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
+                  const SizedBox(height: 50),
                   Container(
                     color: Colors.white,
                     child: Column(
                       children: [
-                        Image.asset('assets/images/ic_launcher.png', width: size.width / 2),
+                        Image.asset('assets/images/ic_launcher.png', width: orientation == Orientation.portrait ? size.width / 2 : size.width / 4),
                         // const FlutterLogo(size: 100, style: FlutterLogoStyle.stacked),
                         AutoSizeText("Easy Apps for tracking your work", style: textStyle.defaultTextStyleBold(), maxLines: 2, minFontSize: 30, maxFontSize: 37, overflow: TextOverflow.fade, textAlign: TextAlign.center),
                         const SizedBox(height: 10),
@@ -62,6 +61,7 @@ class _SignInState extends State<SignIn> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 20),
                   Container(
                     color: Colors.white,
                     child: Column(
@@ -109,6 +109,7 @@ class _SignInState extends State<SignIn> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 50),
                   SizedBox(
                     width: double.infinity,
                     child: Obx(() => ElevatedButton(
@@ -119,7 +120,7 @@ class _SignInState extends State<SignIn> {
                         onPressed: authController.isLoading.value ? (){} : () async {
                           if(_formKey.currentState!.validate()){
                             if(await authController.loginController(email: emailController.text, password: passwordController.text)){
-                              Get.offAll(() => const DashboardTrainer());
+                              Get.offAll(() => const Mainpage());
                               // SharedPreferences prefs = await SharedPreferences.getInstance();
                               // String? token = prefs.getString('token');
                               // if(token != null){
@@ -150,7 +151,6 @@ class _SignInState extends State<SignIn> {
             ),
           ),
         ),
-      ),
     );
   }
 }

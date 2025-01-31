@@ -8,8 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform,
-);
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
 
@@ -33,7 +32,7 @@ class MyApp extends StatelessWidget {
           iconTheme: IconThemeData(color: GlobalVariable.secondaryColor),
         ),
         textTheme: GoogleFonts.poppinsTextTheme(textTheme).copyWith(
-          bodyMedium: GoogleFonts.oswald(textStyle: textTheme.bodyMedium),
+          bodyMedium: GoogleFonts.poppins(textStyle: textTheme.bodyMedium),
         ),
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,

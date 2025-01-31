@@ -24,7 +24,6 @@ class _CustomTextFieldState extends State<CustomTextField> {
           Text(widget.label ?? "Unknown Label"),
           const SizedBox(height: 5),
           TextFormField(
-
             keyboardType: widget.keyboardType ?? TextInputType.text,
             controller: widget.controller,
             validator: (value) {
@@ -51,6 +50,55 @@ class _CustomTextFieldState extends State<CustomTextField> {
           )
         ],
       ),
+    );
+  }
+}
+
+class CustomTextFormField extends StatefulWidget {
+  final TextEditingController? controller;
+  final String? hintText;
+  final TextInputType? keyboardType;
+  final GlobalKey<FormState>? formKey;
+  final bool? readOnly;
+  const CustomTextFormField({super.key, this.controller, this.hintText, this.keyboardType, this.formKey, this.readOnly});
+
+  @override
+  State<CustomTextFormField> createState() => _CustomTextFormFieldState();
+}
+
+class _CustomTextFormFieldState extends State<CustomTextFormField> {
+  @override
+  Widget build(BuildContext context) {
+    return Form(
+      key: widget.formKey,
+      child: TextFormField(
+        controller: widget.controller,
+        readOnly: widget.readOnly ?? false,
+        keyboardType: widget.keyboardType ?? TextInputType.name,
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Please enter ${widget.hintText}';
+          }
+          return null;
+        },
+        cursorColor: Colors.black,
+        decoration: InputDecoration(
+          hintText: "-",
+          label: Text(widget.hintText ?? "Label"),
+          border: const UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.black12, width: 0.5)
+          ),
+          errorBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.red, width: 0.5)
+          ),
+          focusedBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.black12, width: 0.5)
+          ),
+          disabledBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.black12, width: 0.5)
+          ),
+        ),
+      )
     );
   }
 }

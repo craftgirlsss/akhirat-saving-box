@@ -3,6 +3,7 @@ import 'package:asb_app/src/components/global/index.dart';
 import 'package:asb_app/src/controllers/auth/auth_controller.dart';
 import 'package:asb_app/src/models/daftar_donatur_models.dart';
 import 'package:asb_app/src/models/detail_donatur_models.dart';
+import 'package:asb_app/src/models/history_models.dart';
 import 'package:asb_app/src/models/rute_models.dart';
 import 'package:asb_app/src/models/tempat_pengambilan_models.dart';
 import 'package:get/get.dart';
@@ -18,6 +19,7 @@ class TrackingController extends GetxController {
   Rxn<DaftarDonaturModels> daftarDonatur = Rxn<DaftarDonaturModels>();
   Rxn<TempatPengambilanModels> tempatPengambilanModels = Rxn<TempatPengambilanModels>();
   Rxn<DetailDonaturModels> detailDonaturModels = Rxn<DetailDonaturModels>();
+  Rxn<HistoryModels> historyModels = Rxn<HistoryModels>();
 
   Future<bool> getRute() async {
     try {
@@ -128,6 +130,7 @@ class TrackingController extends GetxController {
       isLoading(false);
       if (response.statusCode == 200) {
         if(result['success']) {
+          wasSelfieAsFirst(true);
           responseMessage.value = result['message'];
           return true;
         }
@@ -417,5 +420,94 @@ class TrackingController extends GetxController {
       return false;
     }
   }
-  
+
+  Future<bool> getAllHistoryPengambilan() async {
+    try {
+      isLoading(true);
+      http.Response response = await http.get(
+        Uri.tryParse("${GlobalVariable.mainURL}/riwayat-pengambilan?user=${authController.token.value}")!,
+        headers: {
+          'x-api-key': GlobalVariable.apiKey,
+        }
+      );
+
+      var result = jsonDecode(response.body);
+      isLoading(false);
+      if (response.statusCode == 200) {
+        if(result['success']) {
+          responseMessage.value = result['message'];
+          historyModels.value = HistoryModels.fromJson(result);
+          return true;
+        }
+        responseMessage.value = result['message'];
+        return false;
+      } else {
+        responseMessage.value = result['message'];
+        return false;
+      }
+    } catch (e) {
+      isLoading(false);
+      responseMessage.value = e.toString();
+      return false;
+    }
+  }
+
+
+  Future<bool> tambahDonaturAPI({
+    String? wilayahID,
+    String? province,
+    String? kabupaten,
+    String? kecamatan,
+    String? programID,
+    String? kodeASB,
+    String? namaLengkap,
+    String? gender,
+    String? usia,
+    String? noHP,
+    String? alamat,
+    double? lat,
+    double? long,
+  }) async {
+    try {
+      isLoading(true);
+      http.Response response = await http.post(
+        Uri.tryParse("${GlobalVariable.mainURL}/master/donatur/tambah")!,
+        headers: {
+          'x-api-key': GlobalVariable.apiKey,
+        },
+        body: {
+          'user': authController.token.value,
+          'kode': "ASB$kodeASB",
+          'nama': namaLengkap,
+          'jenis_kelamin': gender == "Laki-laki" ? "L" : "P",
+          'usia': usia,
+          'telepon': noHP,
+          'alamat': alamat,
+          'kecamatan': kecamatan,
+          'kabupaten': kabupaten,
+          'program': programID,
+          'lat': lat.toString(),
+          'lng': long.toString(),
+          'area_id': wilayahID
+        },
+      );
+      var result = jsonDecode(response.body);
+      isLoading(false);
+      if (response.statusCode == 200) {
+        if(result['success']) {
+          responseMessage.value = result['message'];
+          return true;
+        }
+        responseMessage.value = result['message'];
+        return false;
+      } else {
+        responseMessage.value = result['message'];
+        return false;
+      }
+    } catch (e) {
+      isLoading(false);
+      responseMessage.value = e.toString();
+      return false;
+    }
+  }
 }

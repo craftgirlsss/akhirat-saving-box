@@ -1,6 +1,6 @@
 import 'package:asb_app/src/controllers/auth/auth_controller.dart';
 import 'package:asb_app/src/views/auth/introduction_screen.dart';
-import 'package:asb_app/src/views/dashboard/home/index.dart';
+import 'package:asb_app/src/views/mainpage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -43,7 +43,8 @@ class _SplashscreenState extends State<Splashscreen> {
               authController.token.value = token;
               authController.getProfileController(token: token).then((value){
                 if(value){
-                  Get.off(() => const DashboardTrainer());
+                  // Get.off(() => const DashboardTrainer());
+                  Get.off(() => const Mainpage());
                 }else{
                   Get.snackbar("Gagal", "Gagal mendapatkan informasi akun anda, silahkan login ulang!", backgroundColor: Colors.red, colorText: Colors.white, duration: const Duration(seconds: 2));
                   removeToken().then((deleted) => Get.off(() => const IntroductionScreen()));
@@ -64,15 +65,20 @@ class _SplashscreenState extends State<Splashscreen> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final orientation = MediaQuery.of(context).orientation;
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset('assets/images/ic_launcher.png', width: size.width / 2),
-            const Text("Solusi Mudah, dalam Bersedekah", textAlign: TextAlign.center, style: TextStyle(fontSize: 12))
-          ],
+      body: SingleChildScrollView(
+        child: SizedBox(
+          width: size.width,
+          height: size.height,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Center(child: Image.asset('assets/images/ic_launcher.png', width: orientation == Orientation.portrait ? size.width / 2 : size.width / 4)),
+              const Center(child: Text("Solusi Mudah, dalam Bersedekah", textAlign: TextAlign.center, style: TextStyle(fontSize: 12)))
+            ],
+          ),
         ),
       ),
     );

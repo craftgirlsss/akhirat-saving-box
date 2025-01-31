@@ -61,7 +61,6 @@ class _PerhitunganPerolehanState extends State<PerhitunganPerolehan> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
     return GestureDetector(
       onTap: (){
         FocusManager.instance.primaryFocus?.unfocus();
@@ -119,7 +118,8 @@ class _PerhitunganPerolehanState extends State<PerhitunganPerolehan> {
               //     ),
               //   ),
               // ),
-              // const Divider(),
+              const Divider(),
+              const SizedBox(height: 20),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: Table(
@@ -146,7 +146,9 @@ class _PerhitunganPerolehanState extends State<PerhitunganPerolehan> {
               PriceCounter(kelipatanUang: "20.000", controller: counter20000),
               PriceCounter(kelipatanUang: "50.000", controller: counter50000),
               PriceCounter(kelipatanUang: "100.000", controller: counter100000),
+              const SizedBox(height: 30),
               const Divider(),
+              const SizedBox(height: 30),
               Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: Table(
@@ -168,46 +170,49 @@ class _PerhitunganPerolehanState extends State<PerhitunganPerolehan> {
                 ),
               ),
               const SizedBox(height: 20),
-              SizedBox(
-                width: size.width - 50,
-                child: Obx(() => CupertinoButton(
-                  color: GlobalVariable.secondaryColor,
-                  onPressed: trackingController.isLoading.value ? null : (){
-                    showAlertDialog(
-                      context,
-                      title: "Konfirmasi Perhitungan",
-                      content: "Apaka anda yakin mengkonfirmasi perhitungan perolehan kotak amal ${widget.ruteName}?",
-                      onOK: (){
-                        trackingController.hitungPerolehan(
-                          jadwalID: widget.jadwaID,
-                          perolehan: {
-                            "500": counter500.text,
-                            "1000": counter1000.text,
-                            "2000": counter2000.text,
-                            "5000": counter5000.text,
-                            "10000": counter1000.text,
-                            "20000": counter20000.text,
-                            "50000": counter50000.text,
-                            "100000": counter100000.text
-                          } 
-                        ).then((result) {
-                          if(result){
-                            alertSuccess(context, title: "Berhasil", content: trackingController.responseMessage.value, onOK: (){
-                              Navigator.of(context)..pop()..pop();
-                            });
-                          }else{
-                            Get.snackbar("Gagal", trackingController.responseMessage.value, backgroundColor: Colors.red, colorText: Colors.white);
-                          }
-                        });
-                      }
-                    );
-                  },
-                  child: const Text("Submit"), 
-                  ),
-                ),
-              ),
-              const SizedBox(height: 30)
+              
+              const SizedBox(height: 30),
             ],
+          ),
+        ),
+        bottomNavigationBar: Padding(
+          padding: const EdgeInsets.all(15),
+          child: Obx(() => CupertinoButton(
+            color: GlobalVariable.secondaryColor,
+            onPressed: trackingController.isLoading.value ? null : (){
+              showAlertDialog(
+                context,
+                title: "Konfirmasi Perhitungan",
+                content: "Apaka anda yakin mengkonfirmasi perhitungan perolehan kotak amal ${widget.ruteName}?",
+                onOK: (){
+                  Navigator.pop(context);
+                  trackingController.hitungPerolehan(
+                    jadwalID: widget.jadwaID,
+                    perolehan: {
+                      "500": int.parse(counter500.text) / 500,
+                      "1000": int.parse(counter1000.text) / 1000,
+                      "2000": int.parse(counter2000.text) / 2000,
+                      "5000": int.parse(counter5000.text) / 5000,
+                      "10000": int.parse(counter10000.text) / 1000,
+                      "20000": int.parse(counter20000.text) / 20000,
+                      "50000": int.parse(counter50000.text) / 50000,
+                      "100000": int.parse(counter100000.text) / 100000
+                    } 
+                  ).then((result) async {
+                    if(result){
+                      await trackingController.getRute();
+                      alertSuccess(context, title: "Berhasil", content: trackingController.responseMessage.value, onOK: (){
+                        Navigator.of(context)..pop()..pop()..pop();
+                      });
+                    }else{
+                      Get.snackbar("Gagal", trackingController.responseMessage.value, backgroundColor: Colors.red, colorText: Colors.white);
+                    }
+                  });
+                }
+              );
+            },
+            child: Obx(() => trackingController.isLoading.value ? const SizedBox(height: 20, child: CircularProgressIndicator(color: Colors.white)) : const Text("Submit")), 
+            ),
           ),
         ),
       ),
@@ -222,14 +227,14 @@ class _PerhitunganPerolehanState extends State<PerhitunganPerolehan> {
         content: Text(content ?? 'Apakah anda sudah mendatangi tempat dan menandai telah dihadiri?'),
         actions: <CupertinoDialogAction>[
           CupertinoDialogAction(
-            isDefaultAction: true,
+            isDestructiveAction: true,
             onPressed: () {
               Navigator.pop(context);
             },
             child: const Text('Tidak'),
           ),
           CupertinoDialogAction(
-            isDestructiveAction: true,
+            isDefaultAction: true,
             onPressed: onOK,
             child: const Text('Ya'),
           ),
@@ -259,7 +264,8 @@ class _PerhitunganPerolehanState extends State<PerhitunganPerolehan> {
 class PriceCounter extends StatefulWidget {
   final String? kelipatanUang;
   final TextEditingController? controller;
-  const PriceCounter({super.key, this.kelipatanUang, this.controller});
+  final int? jumlah;
+  const PriceCounter({super.key, this.kelipatanUang, this.controller, this.jumlah});
 
   @override
   State<PriceCounter> createState() => _PriceCounterState();
