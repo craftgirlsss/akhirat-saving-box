@@ -1,6 +1,6 @@
 import 'package:asb_app/src/components/global/index.dart';
 import 'package:asb_app/src/controllers/tracking/tracking_controller.dart';
-import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/daftar_lokasi_tagihan_v2.dart';
+import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/daftar_lokasi_tagihan_v3.dart';
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/menu_hari_h.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -65,7 +65,7 @@ class _MenuTimDistribusiState extends State<MenuTimDistribusi> {
                 return Obx(() => CupertinoButton(
                   onPressed: trackingController.isLoading.value ? null : (){
                     if(i == 0){
-                      Get.to(() => const DaftarLokasiTagihanv2());
+                      Get.to(() => const DaftarLokasiTagihanv3(isReminder: true,));
                     }else{
                       Get.to(() => const MenuHariH());
                     }

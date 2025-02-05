@@ -4,6 +4,8 @@ import 'package:asb_app/src/controllers/auth/auth_controller.dart';
 import 'package:asb_app/src/models/daftar_donatur_models.dart';
 import 'package:asb_app/src/models/detail_donatur_models.dart';
 import 'package:asb_app/src/models/history_models.dart';
+import 'package:asb_app/src/models/list_jadwal_donatur.dart';
+import 'package:asb_app/src/models/list_route_after_added_models.dart';
 import 'package:asb_app/src/models/rute_models.dart';
 import 'package:asb_app/src/models/tempat_pengambilan_models.dart';
 import 'package:get/get.dart';
@@ -12,6 +14,7 @@ import 'package:http_parser/http_parser.dart';
 
 class TrackingController extends GetxController {
   RxBool isLoading = false.obs;
+  RxBool isLoadingUpdateTanggal = false.obs;
   RxString responseMessage = "".obs;
   RxBool wasSelfieAsFirst = false.obs;
   AuthController authController = Get.put(AuthController());
@@ -20,6 +23,8 @@ class TrackingController extends GetxController {
   Rxn<TempatPengambilanModels> tempatPengambilanModels = Rxn<TempatPengambilanModels>();
   Rxn<DetailDonaturModels> detailDonaturModels = Rxn<DetailDonaturModels>();
   Rxn<HistoryModels> historyModels = Rxn<HistoryModels>();
+  Rxn<ListJadwal> listJadwalDonatur = Rxn<ListJadwal>();
+  Rxn<ListRuteAfterAddedModels> listRuteTerbaru = Rxn<ListRuteAfterAddedModels>();
 
   Future<bool> getRute() async {
     try {
@@ -36,6 +41,42 @@ class TrackingController extends GetxController {
       if (response.statusCode == 200) {
         if(result['success']) {
           ruteModels.value = RuteModels.fromJson(result);
+          responseMessage.value = result['message'];
+          return true;
+        }
+        responseMessage.value = result['message'];
+        return false;
+      } else {
+        responseMessage.value = result['message'];
+        return false;
+      }
+    } catch (e) {
+      isLoading(false);
+      responseMessage.value = e.toString();
+      return false;
+    }
+  }
+
+  Future<bool> getRuteV2({String? ruteID, String? type, String? tanggal}) async {
+    try {
+      isLoading(true);
+      http.Response response = await http.get(
+        Uri.tryParse("${GlobalVariable.mainURL}/list-rute?user=${authController.token.value}&rute=$ruteID&type=$type&tanggal=$tanggal")!,
+        headers: {
+          'x-api-key': GlobalVariable.apiKey,
+        }
+      );
+
+      var result = jsonDecode(response.body);
+      isLoading(false);
+      // print("ini ruteID = $ruteID");
+      // print("ini userID = ${authController.token.value}");
+      // print("ini type = $type");
+      // print("ini tanggal = $tanggal");
+      // print(result);
+      if (response.statusCode == 200) {
+        if(result['success']) {
+          listRuteTerbaru.value = ListRuteAfterAddedModels.fromJson(result);
           responseMessage.value = result['message'];
           return true;
         }
@@ -260,6 +301,7 @@ class TrackingController extends GetxController {
         },
       );
       var result = jsonDecode(response.body);
+      print(result);
       isLoading(false);
       if (response.statusCode == 200) {
         if(result['success']) {
@@ -279,22 +321,24 @@ class TrackingController extends GetxController {
     }
   }
 
-  Future<bool> ubahTanggalRapel({String? jam, String? jadwalID, String? tanggal}) async {
+  Future<bool> ubahTanggalRapel({String? donaturID, String? tanggal, String? jam}) async {
+    print("Fungsi ubahTanggalRapel() dijalankan");
     try {
       isLoading(true);
       http.Response response = await http.post(
-        Uri.tryParse("${GlobalVariable.mainURL}/update-jadwal")!,
+        Uri.tryParse("${GlobalVariable.mainURL}/master/jadwal/update")!,
         headers: {
           'x-api-key': GlobalVariable.apiKey,
         },
         body: {
           'user': authController.token.value,
-          'jadwal': jadwalID,
-          'tanggal': tanggal,
-          'waktu': jam
+          'drute_id': donaturID,
+          'date': tanggal,
+          'time' : jam
         },
       );
       var result = jsonDecode(response.body);
+      print("Ini result ubahTanggalRapel => $result dengan donaturID => $donaturID dan userID => ${authController.token.value} dan tanggal => $tanggal");
       isLoading(false);
       if (response.statusCode == 200) {
         if(result['success']) {
@@ -347,14 +391,17 @@ class TrackingController extends GetxController {
     }
   }
 
-  Future<bool> selesaiAmbil({String? jadwalID, List<String>? photos}) async {
+  Future<bool> selesaiAmbil({String? jadwalID, List<String>? photos, double? lat, double? long, String? catatanKhusus}) async {
     try {
       isLoading(true);
       var request = http.MultipartRequest('POST', Uri.parse('${GlobalVariable.mainURL}/konfirmasi-pengambilan'));
       request.headers.addAll({'x-api-key': GlobalVariable.apiKey});
       request.fields.addAll({
         'jadwal': jadwalID ?? '',
-        'user': authController.token.value
+        'user': authController.token.value,
+        'lat': lat.toString(),
+        'lng': long.toString(),
+        'desc': catatanKhusus ?? "-"
       });
 
 
@@ -370,8 +417,11 @@ class TrackingController extends GetxController {
         request.files.add(await http.MultipartFile.fromPath('images[]', photos[i], contentType: MediaType('image', 'jpeg')));
       }
 
+      print("Ini bukti bukti => {jadwal: $jadwalID, userID: ${authController.token.value}, lattitude:$lat, long:$long, desc:$catatanKhusus photo:$photos}");
+
       http.StreamedResponse response = await request.send();
-      jsonDecode(await response.stream.bytesToString());
+      var result = jsonDecode(await response.stream.bytesToString());
+      print(result);
       isLoading(false);
       if (response.statusCode == 200) {
         responseMessage.value = "Berhasil mengirim gambar";
@@ -506,6 +556,71 @@ class TrackingController extends GetxController {
       }
     } catch (e) {
       isLoading(false);
+      responseMessage.value = e.toString();
+      return false;
+    }
+  }
+
+  Future<bool> getDaftarJadwal() async {
+    try {
+      isLoading(true);
+      http.Response response = await http.get(
+        Uri.tryParse("${GlobalVariable.mainURL}/master/jadwal/list?user=${authController.token.value}")!,
+        headers: {
+          'x-api-key': GlobalVariable.apiKey,
+        }
+      );
+
+      var result = jsonDecode(response.body);
+      isLoading(false);
+      if (response.statusCode == 200) {
+        if(result['success']) {
+          responseMessage.value = result['message'];
+          listJadwalDonatur.value = ListJadwal.fromJson(result);
+          return true;
+        }
+        responseMessage.value = result['message'];
+        return false;
+      } else {
+        responseMessage.value = result['message'];
+        return false;
+      }
+    } catch (e) {
+      isLoading(false);
+      responseMessage.value = e.toString();
+      return false;
+    }
+  }
+
+  Future<bool> updateTanggalPengambilan({String? donaturRuteID, String? date}) async {
+    try {
+      isLoadingUpdateTanggal(true);
+      http.Response response = await http.post(
+        Uri.tryParse("${GlobalVariable.mainURL}/master/jadwal/update")!,
+        headers: {
+          'x-api-key': GlobalVariable.apiKey,
+        },
+        body: {
+          'user': authController.token.value,
+          'drute_id': donaturRuteID ?? '0',
+          'datetime': date ?? '2025-01-31 00:00:00'
+        },
+      );
+      var result = jsonDecode(response.body);
+      isLoadingUpdateTanggal(false);
+      if (response.statusCode == 200) {
+        if(result['success']) {
+          responseMessage.value = result['message'];
+          return true;
+        }
+        responseMessage.value = result['message'];
+        return false;
+      } else {
+        responseMessage.value = result['message'];
+        return false;
+      }
+    } catch (e) {
+      isLoadingUpdateTanggal(false);
       responseMessage.value = e.toString();
       return false;
     }

@@ -10,7 +10,8 @@ import 'package:image_picker/image_picker.dart';
 
 class CekKeberangkatan extends StatefulWidget {
   final String? title;
-  const CekKeberangkatan({super.key, this.title});
+  final bool? isGoBack;
+  const CekKeberangkatan({super.key, this.title, this.isGoBack});
 
   @override
   State<CekKeberangkatan> createState() => _CekKeberangkatanState();
@@ -43,7 +44,7 @@ class _CekKeberangkatanState extends State<CekKeberangkatan> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(widget.title ?? "Cek Kelengkapan", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+        title: widget.isGoBack != null || widget.isGoBack == true ? Text(widget.title ?? "Cek Kelengkapan Pulang", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)) : Text(widget.title ?? "Cek Kelengkapan", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
         // actions: [
         //   CupertinoButton(
         //     onPressed: (){
@@ -213,17 +214,21 @@ class _CekKeberangkatanState extends State<CekKeberangkatan> {
               if(urlPhotoHelm.value == "" || urlPhotoMotor.value == "" || urlPhotoSepatu.value == "" || urlPhotoKaleng.value == ""){
                 Get.snackbar("Gagal", "Mohon isikan semua foto keberangkatan", backgroundColor: Colors.red, colorText: Colors.white);
               }else{
-                if(await trackingController.postCheckingSelfFirst(
-                  description: notesController.text, 
-                  urlImage1: urlPhotoHelm.value,
-                  urlImage2: urlPhotoSepatu.value,
-                  urlImage3: urlPhotoMotor.value
-                )){
-                  trackingController.wasSelfieAsFirst.value = true;
-                  Get.snackbar("Berhasil", "Berhasil upload foto keberangkatan", backgroundColor: Colors.green, colorText: Colors.white);
-                  Future.delayed(const Duration(seconds: 2), (){
-                    Get.offAll(() => const MenuHariH());
-                  });
+                if(widget.isGoBack == null || widget.isGoBack == false){
+                  if(await trackingController.postCheckingSelfFirst(
+                    description: notesController.text, 
+                    urlImage1: urlPhotoHelm.value,
+                    urlImage2: urlPhotoSepatu.value,
+                    urlImage3: urlPhotoMotor.value
+                  )){
+                    trackingController.wasSelfieAsFirst.value = true;
+                    Get.snackbar("Berhasil", "Berhasil upload foto keberangkatan", backgroundColor: Colors.green, colorText: Colors.white);
+                    Future.delayed(const Duration(seconds: 2), (){
+                      Get.offAll(() => const MenuHariH());
+                    });
+                  }
+                }else{
+                  print("Function Post Pulang");
                 }
               }
             },

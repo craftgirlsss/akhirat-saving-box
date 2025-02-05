@@ -89,11 +89,11 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                         elevation: 0,
                         backgroundColor: GlobalVariable.secondaryColor,
                       ),
-                      onPressed: authController.isLoading.value ? (){} : () async {
+                      onPressed: authController.isLoading.value ? null : () async {
                         if(_formKey.currentState!.validate()){
                           if(await authController.resetPasswordController(email: emailController.text)){
                             Get.snackbar("Sukses", authController.responseMessage.value, colorText: Colors.white, backgroundColor: Colors.green);
-                            Get.offAll(() => const IntroductionScreen());
+                            Get.back();
                           }
                         }
                       }, 

@@ -69,7 +69,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         GestureDetector(
           onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
           child: Scaffold(
-            backgroundColor: GlobalVariable.backgroundColor,
+            backgroundColor: Colors.white,
             appBar: AppBar(
               centerTitle: true,
               title: Text("Ubah Password", style: textStyle.defaultTextStyleBold(fontSize: 17)),
@@ -85,35 +85,35 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                     keyboardAppearance: Brightness.dark,
                     style: textStyle.defaultTextStyleMedium(fontSize: 13),
                     decoration: InputDecoration(
-                        hintText: "Password Sekarang",
-                        errorStyle: textStyle.defaultTextStyleMedium(color: Colors.red),
-                        labelText: "Password Sekarang",
-                        labelStyle: const TextStyle(color: GlobalVariable.secondaryColor),
-                        hintStyle: const TextStyle(color: Colors.black54, fontSize: 14),
-                        filled: false,
-                        suffix: GestureDetector(
-                          onTap: (){
-                            setState(() {
-                              showCurrentPassword = !showCurrentPassword;
-                            });
-                          },
-                          child: showCurrentPassword == true ?  Icon(Icons.visibility, color: GlobalVariable.secondaryColor.withOpacity(0.5)) :  Icon(Icons.visibility_off, color: GlobalVariable.secondaryColor.withOpacity(0.5)),
-                        ),
-                        focusedBorder: const UnderlineInputBorder(
-                            borderSide: BorderSide(
-                                color:GlobalVariable.secondaryColor
-                            )
-                        ),
-                        enabledBorder: const UnderlineInputBorder(
-                            borderSide: BorderSide(
-                                color:GlobalVariable.secondaryColor
-                            )
-                        ),
-                        border: const UnderlineInputBorder(
-                            borderSide: BorderSide(
-                                color:GlobalVariable.secondaryColor
-                            )
-                        )
+                      hintText: "Password Sekarang",
+                      errorStyle: textStyle.defaultTextStyleMedium(color: Colors.red),
+                      labelText: "Password Sekarang",
+                      labelStyle: const TextStyle(color: GlobalVariable.secondaryColor),
+                      hintStyle: const TextStyle(color: Colors.black54, fontSize: 14),
+                      filled: false,
+                      suffix: GestureDetector(
+                        onTap: (){
+                          setState(() {
+                            showCurrentPassword = !showCurrentPassword;
+                          });
+                        },
+                        child: showCurrentPassword == true ?  Icon(Icons.visibility, color: GlobalVariable.secondaryColor.withOpacity(0.5)) :  Icon(Icons.visibility_off, color: GlobalVariable.secondaryColor.withOpacity(0.5)),
+                      ),
+                      focusedBorder: const UnderlineInputBorder(
+                          borderSide: BorderSide(
+                              color:GlobalVariable.secondaryColor
+                          )
+                      ),
+                      enabledBorder: const UnderlineInputBorder(
+                          borderSide: BorderSide(
+                              color:GlobalVariable.secondaryColor
+                          )
+                      ),
+                      border: const UnderlineInputBorder(
+                          borderSide: BorderSide(
+                              color:GlobalVariable.secondaryColor
+                          )
+                      )
                     ),
                     onChanged: (text) => onPasswordChanged(text),
                   ),

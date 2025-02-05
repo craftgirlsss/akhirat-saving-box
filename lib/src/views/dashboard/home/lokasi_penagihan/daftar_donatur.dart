@@ -1,4 +1,5 @@
 import 'package:asb_app/src/components/global/index.dart';
+import 'package:asb_app/src/controllers/tracking/tracking_controller.dart';
 import 'package:asb_app/src/controllers/wilayah/wilayah_controller.dart';
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/detail_lokasi.dart';
 import 'package:flutter/cupertino.dart';
@@ -18,6 +19,7 @@ class DaftarDonaturH extends StatefulWidget {
 class _DaftarDonaturHState extends State<DaftarDonaturH> {
   final ScrollController _firstController = ScrollController();
   WilayahController wilayahController = Get.put(WilayahController());
+  TrackingController trackingController = Get.find();
   RxString wilayahID = ''.obs;
   DateTime now = DateTime.now();
   RxString selectedDate = ''.obs;
@@ -40,6 +42,10 @@ class _DaftarDonaturHState extends State<DaftarDonaturH> {
 
   String dateFormattedYearAndMonth({DateTime? time}){
     return DateFormat('yyyy MMMM').format(time ?? now);
+  }
+
+  String dateFormattedYearAndMonthV2({DateTime? time}){
+    return DateFormat('yyyy-MM').format(time ?? now);
   }
 
   String dateFormatTime({DateTime? time}){
@@ -79,6 +85,36 @@ class _DaftarDonaturHState extends State<DaftarDonaturH> {
         setState(() {});
         selectedDate.value = dateFormattedYearAndMonth(time: now);
         wilayahID.value = wilayahController.wilayahModels.value!.data[0].id;
+        trackingController.getRuteV2(ruteID: wilayahID.value, tanggal: dateFormattedYearAndMonthV2(time: now)).then((api){
+          print("ini result API => $api");
+          if(!api){
+            Get.snackbar("Gagal", trackingController.responseMessage.value, backgroundColor: Colors.red, colorText: Colors.white);
+          }else{
+            if(trackingController.listRuteTerbaru.value != null){
+              donaturClass = List.generate(trackingController.listRuteTerbaru.value?.data?.length ?? 0, (i) {
+                return DonaturClass(
+                  idDonatur: trackingController.listRuteTerbaru.value?.data?[i].id,
+                  id: trackingController.listRuteTerbaru.value?.data?[i].kode,
+                  name: trackingController.listRuteTerbaru.value?.data?[i].nama,
+                  nohp: trackingController.listRuteTerbaru.value?.data?[i].telepon,
+                  alamat: trackingController.listRuteTerbaru.value?.data?[i].alamat,
+                  catatanKhusus: trackingController.listRuteTerbaru.value?.data?[i].catatanKhusus == null || trackingController.listRuteTerbaru.value?.data?[i].catatanKhusus == "" ? "Kosong" : trackingController.listRuteTerbaru.value?.data?[i].catatanKhusus,
+                  jam: trackingController.listRuteTerbaru.value?.data?[i].jam,
+                  h1: trackingController.listRuteTerbaru.value?.data?[i].h1,
+                  h2: trackingController.listRuteTerbaru.value?.data?[i].h2,
+                  h: trackingController.listRuteTerbaru.value?.data?[i].h,
+                  rapel: trackingController.listRuteTerbaru.value?.data?[i].rapel,
+                  jadwalRapel: trackingController.listRuteTerbaru.value?.data?[i].rapel,
+                  tanggal: trackingController.listRuteTerbaru.value?.data?[i].tanggalPengambilan,
+                );
+              });
+              setState(() {
+                donaturDataSource = DonaturDataSource(employeeData: donaturClass);
+              });
+            }
+          }
+        });
+        /*
         wilayahController.getDonaturByWilayahID(wilayahID: wilayahID.value).then((value){
           if(!result){
             Get.snackbar("Gagal", wilayahController.responseString.value, backgroundColor: Colors.red, colorText: Colors.white);
@@ -96,6 +132,7 @@ class _DaftarDonaturHState extends State<DaftarDonaturH> {
             }
           }
         });
+        */
       }else{
         Get.snackbar("Gagal", wilayahController.responseString.value, backgroundColor: Colors.red, colorText: Colors.white);
       }
@@ -288,7 +325,7 @@ class _DaftarDonaturHState extends State<DaftarDonaturH> {
                       decoration: const BoxDecoration(
                         border: Border(right: BorderSide(color: Colors.black12), bottom: BorderSide(color: Colors.black12))
                       ),
-                      child: SfDataGrid(
+                      child: donaturDataSource == null ? const SizedBox() : SfDataGrid(
                         allowSorting: true,
                         sortingGestureType: SortingGestureType.tap,
                         source: donaturDataSource!,
@@ -453,11 +490,11 @@ class DonaturClass {
   final String? jam;
   final String? hari;
   final String? tanggal;
-  final String? h2;
-  final String? h1;
-  final String? h;
-  final String? rapel;
-  final String? jadwalRapel;
+  final bool? h2;
+  final bool? h1;
+  final bool? h;
+  final bool? rapel;
+  final bool? jadwalRapel;
   final String? fotoPenukaran;
   final String? lokasiTerakhir;
   final String? catatanKhusus;
@@ -468,21 +505,21 @@ class DonaturDataSource extends DataGridSource {
   DonaturDataSource({required List<DonaturClass> employeeData}) {
     _employeeData = employeeData.map<DataGridRow>((e) => DataGridRow(
       cells: [
-        DataGridCell(columnName: 'id', value: e.id),
-        DataGridCell(columnName: 'name', value: e.name),
-        DataGridCell(columnName: 'alamat', value: e.alamat),
-        DataGridCell(columnName: 'nohp', value: e.nohp),
-        DataGridCell(columnName: 'jam', value: e.jam),
-        DataGridCell(columnName: 'hari', value: e.hari),
-        DataGridCell(columnName: 'tanggal', value: e.tanggal),
-        DataGridCell(columnName: 'h2', value: e.h2),
-        DataGridCell(columnName: 'h1', value: e.h1),
-        DataGridCell(columnName: 'h', value: e.h),
-        DataGridCell(columnName: 'rapel', value: e.rapel),
-        DataGridCell(columnName: 'jadwal_rapel', value: e.jadwalRapel),
-        DataGridCell(columnName: 'foto_penukaran', value: e.fotoPenukaran),
-        DataGridCell(columnName: 'lokasi_terakhir', value: e.lokasiTerakhir),
-        DataGridCell(columnName: 'catatan_khusus', value: e.catatanKhusus),
+        DataGridCell<String>(columnName: 'id', value: e.id),
+        DataGridCell<String>(columnName: 'name', value: e.name),
+        DataGridCell<String>(columnName: 'alamat', value: e.alamat),
+        DataGridCell<String>(columnName: 'nohp', value: e.nohp),
+        DataGridCell<String>(columnName: 'jam', value: e.jam),
+        DataGridCell<String>(columnName: 'hari', value: e.hari),
+        DataGridCell<String>(columnName: 'tanggal', value: e.tanggal),
+        DataGridCell<bool>(columnName: 'h2', value: e.h2),
+        DataGridCell<bool>(columnName: 'h1', value: e.h1),
+        DataGridCell<bool>(columnName: 'h', value: e.h),
+        DataGridCell<bool>(columnName: 'rapel', value: e.rapel),
+        DataGridCell<bool>(columnName: 'jadwal_rapel', value: e.jadwalRapel),
+        DataGridCell<String>(columnName: 'foto_penukaran', value: e.fotoPenukaran),
+        DataGridCell<String>(columnName: 'lokasi_terakhir', value: e.lokasiTerakhir),
+        DataGridCell<String>(columnName: 'catatan_khusus', value: e.catatanKhusus),
       ]))
     .toList();
   }

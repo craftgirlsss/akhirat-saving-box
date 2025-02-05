@@ -1,7 +1,7 @@
 import 'package:asb_app/src/components/global/index.dart';
 import 'package:asb_app/src/controllers/tracking/tracking_controller.dart';
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/cek_keberangkatan.dart';
-import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/daftar_donatur.dart';
+import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/daftar_lokasi_tagihan_v2.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -67,13 +67,14 @@ class _MenuHariHState extends State<MenuHariH> {
                         }
                       }else if(i == 1){
                         if(trackingController.wasSelfieAsFirst.value){
-                          Get.to(() => const DaftarDonaturH());
+                          // Get.to(() => const DaftarDonaturH());
+                          Get.to(() => const DaftarLokasiTagihanv2());
                         }else{
                           Get.snackbar("Gagal", "Anda belum melakukan progress keberangkatan untuk hari ini", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
                         }
                       }else{
                         if(trackingController.wasSelfieAsFirst.value){
-                          Get.to(() => const CekKeberangkatan(title: "Ceklist Selesai"));
+                          Get.to(() => const CekKeberangkatan(isGoBack: true));
                         }else{
                           Get.snackbar("Gagal", "Anda belum melakukan progress keberangkatan untuk hari ini", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
                         }

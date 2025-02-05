@@ -1,4 +1,5 @@
 import 'package:asb_app/src/views/dashboard/home/index.dart';
+import 'package:asb_app/src/views/dashboard/profiles/index.dart';
 import 'package:flutter/material.dart';
 
 class Mainpage extends StatefulWidget {
@@ -13,7 +14,7 @@ class _MainpageState extends State<Mainpage> {
   int _selectedIndex = 0;
   static final List<Widget> _widgetOptions = <Widget>[
     const TimeDistribusi(),
-    const Text("Profile"),
+    const AccountSettings()
   ];
 
   void _onItemTapped(int index) {

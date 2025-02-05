@@ -1,3 +1,6 @@
+import 'package:asb_app/src/controllers/auth/auth_controller.dart';
+import 'package:asb_app/src/views/auth/forgot.dart';
+import 'package:asb_app/src/views/auth/introduction_screen.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +10,8 @@ import 'package:asb_app/src/components/global/index.dart';
 import 'package:asb_app/src/components/textsyle/index.dart';
 import 'package:asb_app/src/components/utilities/utilities.dart';
 import 'package:asb_app/src/views/dashboard/profiles/ticket.dart';
-import 'change_password.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+// import 'change_password.dart';
 
 class AccountSettings extends StatefulWidget {
   const AccountSettings({super.key});
@@ -17,6 +21,7 @@ class AccountSettings extends StatefulWidget {
 }
 
 class _AccountSettingsState extends State<AccountSettings> {
+  AuthController authController = Get.find();
   final globalVariable = GlobalVariable();
   final textStyle = GlobalTextStyle();
   final utilities = Utilities();
@@ -33,61 +38,93 @@ class _AccountSettingsState extends State<AccountSettings> {
         centerTitle: true,
         title: const Text("More"),
       ),
-      body: Stack(
-        children: [
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 15),
-              child: Column(
-                children: [
-                  const SizedBox(height: 40),
-                  const CircleAvatar(
-                    minRadius: 50,
-                    backgroundColor: Color.fromRGBO(229, 230, 225, 1),
-                    backgroundImage: AssetImage('assets/images/background.png')
-                  ),
-                  const SizedBox(height: 40),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      color: Colors.white,
-                    ),
-                    child: Column(
-                      children: [
-                        utilities.cardTitle(title: "Settings"),
-                        const SizedBox(height: 6),
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          onTap: (){
-                            Navigator.push(context, MaterialPageRoute(builder: (context) => const ChangePasswordPage()));
-                          },
-                          dense: true,
-                          title: const Text("Ganti Password"),
-                          leading: const Icon(TeenyIcons.password, color: GlobalVariable.secondaryColor),
-                          trailing: const CupertinoListTileChevron(),
-                        ),
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          onTap: (){
-                            Get.to(() => const TicketPage());
-                          },
-                          dense: true,
-                          title: const Text("Chat Support"),
-                          leading: const Icon(CupertinoIcons.bubble_left_bubble_right_fill, color: GlobalVariable.secondaryColor),
-                          trailing: const CupertinoListTileChevron(),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  CupertinoButton(
-                    onPressed: (){},
-                    child: AutoSizeText("Logout", maxLines: 1, style: textStyle.defaultTextStyleMedium(color: GlobalVariable.secondaryColor, fontSize: 17))
-                  )
-                ],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 15),
+          child: Column(
+            children: [
+              const SizedBox(height: 40),
+              const CircleAvatar(
+                minRadius: 50,
+                backgroundColor: Color.fromRGBO(229, 230, 225, 1),
+                backgroundImage: AssetImage('assets/images/background.png')
               ),
-            ),
+              const SizedBox(height: 10),
+              Obx(() => Text(authController.profileModels.value?.data.name ?? "Unknown Name", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+              const SizedBox(height: 10),
+              Obx(() => Text(authController.profileModels.value?.data.email ?? "Unknown Email", style: const TextStyle(fontSize: 14, color: Colors.black45))),
+              const SizedBox(height: 40),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: Colors.white,
+                ),
+                child: Column(
+                  children: [
+                    utilities.cardTitle(title: "Settings"),
+                    const SizedBox(height: 6),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      onTap: (){
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const ForgotPassword()));
+                      },
+                      dense: true,
+                      title: const Text("Ganti Password"),
+                      leading: const Icon(TeenyIcons.password, color: GlobalVariable.secondaryColor),
+                      trailing: const CupertinoListTileChevron(),
+                    ),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      onTap: (){
+                        Get.to(() => const TicketPage());
+                      },
+                      dense: true,
+                      title: const Text("Chat Support"),
+                      leading: const Icon(CupertinoIcons.bubble_left_bubble_right_fill, color: GlobalVariable.secondaryColor),
+                      trailing: const CupertinoListTileChevron(),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              Obx(() => CupertinoButton(
+                  onPressed: authController.isLoading.value ? null : () async {
+                    _showAlertDialog(context);
+                  },
+                  child: AutoSizeText("Logout", maxLines: 1, style: textStyle.defaultTextStyleMedium(color: GlobalVariable.secondaryColor, fontSize: 17))
+                ),
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showAlertDialog(BuildContext context) {
+    showCupertinoDialog<void>(
+      context: context,
+      builder: (BuildContext context) => CupertinoAlertDialog(
+        title: const Text('Log Out'),
+        content: const Text('Apakah anda ingin keluar dari akun anda?'),
+        actions: <CupertinoDialogAction>[
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('Tidak'),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () async {
+              SharedPreferences prefs = await SharedPreferences.getInstance();
+              prefs.remove('login');
+              prefs.remove('token');
+              Get.offAll(() => const IntroductionScreen());
+            },
+            child: const Text('Ya'),
           ),
         ],
       ),

@@ -306,13 +306,20 @@ class _DashboardTrainerState extends State<DashboardTrainer> {
 */
 import 'package:asb_app/src/components/global/index.dart';
 import 'package:asb_app/src/controllers/auth/auth_controller.dart';
+import 'package:asb_app/src/controllers/tracking/tracking_controller.dart';
 import 'package:asb_app/src/controllers/utilities/location_controller.dart';
+import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/cek_keberangkatan.dart';
+import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/daftar_lokasi_tagihan_v2.dart';
+import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/daftar_lokasi_tagihan_v3.dart';
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/menu_tim_distribusi.dart';
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/tambah_page_donatur.dart';
+import 'package:asb_app/src/views/dashboard/profiles/notification_pages.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_cupertino_datetime_picker/flutter_cupertino_datetime_picker.dart';
 import 'package:get/get.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -325,6 +332,7 @@ class TimeDistribusi extends StatefulWidget {
 
 class _TimeDistribusiState extends State<TimeDistribusi> {
   AuthController authController = Get.find();
+  TrackingController trackingController = Get.put(TrackingController());
   LocationController locationController = Get.put(LocationController());
   RxString appVersion = ''.obs;
 
@@ -338,6 +346,7 @@ class _TimeDistribusiState extends State<TimeDistribusi> {
     super.initState();
     Future.delayed(const Duration(seconds: 1), (){
       getAppVersion().then((version) => appVersion.value = version);
+      trackingController.checkingSelfFirst();
     });
   }
 
@@ -349,6 +358,7 @@ class _TimeDistribusiState extends State<TimeDistribusi> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         centerTitle: false,
+        forceMaterialTransparency: true,
         title: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -366,7 +376,9 @@ class _TimeDistribusiState extends State<TimeDistribusi> {
         actions: [
           CupertinoButton(
             padding: EdgeInsets.zero,
-            child: const Icon(Iconsax.notification_bold, color: GlobalVariable.secondaryColor), onPressed: (){})
+            child: const Icon(Iconsax.notification_bold, color: GlobalVariable.secondaryColor), onPressed: (){
+              Get.to(() => const NotificationPages());
+            })
         ],
       ),
 
@@ -415,18 +427,20 @@ class _TimeDistribusiState extends State<TimeDistribusi> {
                         ],
                       ),
                     ),
-                    Column(
-                      children: [
-                        Expanded(child: Image.asset('assets/images/place.png')),
-                        Obx(() => CupertinoButton(
-                            padding: EdgeInsets.zero,
-                            onPressed: locationController.isLoading.value ? null : (){
-                              locationController.getCurrentLocation();
-                            },
-                            child: Obx(() => locationController.isLoading.value ? const CupertinoActivityIndicator(color: Colors.white70) : const Icon(CupertinoIcons.refresh, size: 18, color: Colors.white70)), 
-                          ),
-                        )
-                      ],
+                    Expanded(
+                      child: Column(
+                        children: [
+                          Expanded(child: Image.asset('assets/images/place.png')),
+                          Obx(() => CupertinoButton(
+                              padding: EdgeInsets.zero,
+                              onPressed: locationController.isLoading.value ? null : (){
+                                locationController.getCurrentLocation();
+                              },
+                              child: Obx(() => locationController.isLoading.value ? const CupertinoActivityIndicator(color: Colors.white70) : const Icon(CupertinoIcons.refresh, size: 18, color: Colors.white70)), 
+                            ),
+                          )
+                        ],
+                      ),
                     )
                   ],
                 ),
@@ -459,9 +473,11 @@ class _TimeDistribusiState extends State<TimeDistribusi> {
                         }
                       }, title: "Tim Distributor", urlImage: 'assets/images/group.png', color: const Color.fromARGB(255, 111, 16, 114), orientation: orientation),
                     ),
-                    menuItem(size, onTap: (){}, title: "Donatur", color: const Color.fromARGB(255, 16, 114, 30), urlImage: 'assets/images/team.png', orientation: orientation),
-                    menuItem(size, onTap: (){}, title: "Riwayat", color: const Color.fromARGB(255, 135, 127, 11), urlImage: 'assets/images/history.png', orientation: orientation),
-                    menuItem(size, onTap: (){}, title: "Notifikasi", color: const Color.fromARGB(255, 14, 149, 140), urlImage: 'assets/images/notification.png', orientation: orientation),
+                    menuItem(size, onTap: (){}, title: "Donatur", color: const Color.fromARGB(255, 16, 114, 30), urlImage: 'assets/images/team.png', orientation: orientation, isCommingSoon: true),
+                    menuItem(size, onTap: (){}, title: "Riwayat", color: const Color.fromARGB(255, 135, 127, 11), urlImage: 'assets/images/history.png', orientation: orientation, isCommingSoon: true),
+                    menuItem(size, onTap: (){
+                      Get.to(() => const NotificationPages());
+                    }, title: "Notifikasi", color: const Color.fromARGB(255, 14, 149, 140), urlImage: 'assets/images/notification.png', orientation: orientation),
                   ]
                 ),
               ),
@@ -493,29 +509,60 @@ class _TimeDistribusiState extends State<TimeDistribusi> {
                     Color.fromARGB(255, 87, 81, 36),
                   ])
                 ),
-                child: Wrap(
-                  alignment: WrapAlignment.spaceBetween,
-                  crossAxisAlignment: WrapCrossAlignment.start,
-                  children: [
-                    Obx(() => itemShortcut(
-                      onPressed: locationController.isLoading.value ? null : () async {
-                        if(locationController.myLocationV2.value == ""){
-                          final permissionLocation = await Permission.location.status;
-                          Get.snackbar("Gagal", "Gagal mendapatkan lokasi anda", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
-                          if(permissionLocation.isDenied || permissionLocation.isPermanentlyDenied){
-                            openAppSettings();
+                child: Obx(() => trackingController.isLoading.value ? const Center(child: CupertinoActivityIndicator(color: Colors.white)) : Wrap(
+                    alignment: WrapAlignment.spaceAround,
+                    crossAxisAlignment: WrapCrossAlignment.start,
+                    children: [
+                      Obx(() => itemShortcut(
+                        onPressed: locationController.isLoading.value ? null : () async {
+                          if(locationController.myLocationV2.value == ""){
+                            final permissionLocation = await Permission.location.status;
+                            Get.snackbar("Gagal", "Gagal mendapatkan lokasi anda", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
+                            if(permissionLocation.isDenied || permissionLocation.isPermanentlyDenied){
+                              openAppSettings();
+                            }
+                          }else{
+                            Get.to(() => const TambahDonaturPage());
                           }
-                        }else{
-                          Get.to(() => const TambahDonaturPage());
-                        }
-                      },
-                      name: "Tambah\nDonatur", 
-                      urlImage: 'assets/images/plus_blue.png')
-                    ),
-                    itemShortcut(onPressed: (){}, name: "H", urlImage: 'assets/images/h.png'),
-                    itemShortcut(onPressed: (){}, name: "Reminder", urlImage: 'assets/images/reminder.png'),
-                    itemShortcut(onPressed: (){}, name: "Mulai\nBerangkat", urlImage: 'assets/images/go.png')
-                  ],
+                        },
+                        name: "Tambah\nDonatur", 
+                        urlImage: 'assets/images/plus_blue.png')
+                      ),
+                      Obx(() => itemShortcut(
+                        onPressed: trackingController.wasSelfieAsFirst.value ? (){
+                          Get.to(() => const DaftarLokasiTagihanv2());
+                        } : (){
+                          Get.snackbar("Gagal", "Anda sudah melakukan cek keberangkatan untuk hari ini", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
+                        }, 
+                        name: "H Donatur", 
+                        urlImage: 'assets/images/h.png'),
+                      ),
+                      Obx(() => itemShortcut(
+                        onPressed: trackingController.wasSelfieAsFirst.value ? (){
+                          Get.to(() => const DaftarLokasiTagihanv3(isReminder: true));
+                        } : (){
+                          Get.snackbar("Gagal", "Anda sudah melakukan cek keberangkatan untuk hari ini", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
+                        },  
+                        name: "Reminder", 
+                        urlImage: 'assets/images/reminder.png')
+                      ),
+                      Obx(() => itemShortcut(onPressed: trackingController.wasSelfieAsFirst.value ? (){
+                          Get.snackbar("Gagal", "Anda sudah melakukan cek keberangkatan untuk hari ini", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
+                        } : (){
+                          Get.to(() => const CekKeberangkatan());
+                        }, name: "Mulai\nBerangkat", urlImage: 'assets/images/go.png'),
+                      ),
+                      Obx(() => itemShortcut(onPressed: trackingController.wasSelfieAsFirst.value ? (){
+                          Get.to(() => const CekKeberangkatan(isGoBack: true));
+                        } : (){
+                          Get.snackbar("Gagal", "Anda sudah melakukan cek keberangkatan untuk hari ini", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
+                        }, name: "Selesai", urlImage: 'assets/images/done.png'),
+                      ),
+                      itemShortcut(onPressed: (){
+                        Get.to(() => const DaftarDonaturView());
+                      }, name: "Tambah\nJadwal", urlImage: 'assets/images/add_jadwal.png'),
+                    ],
+                  ),
                 ),
               ),
                   
@@ -529,55 +576,78 @@ class _TimeDistribusiState extends State<TimeDistribusi> {
     );
   }
 
-  CupertinoButton menuItem(Size size, {String? title, Function()? onTap, Color? color, String? urlImage, Orientation? orientation}){
+  CupertinoButton menuItem(Size size, {String? title, Function()? onTap, Color? color, String? urlImage, Orientation? orientation, bool? isCommingSoon}){
     return CupertinoButton(
       onPressed: onTap,
       padding: EdgeInsets.zero,
-      child: Container(
-        width: orientation == Orientation.landscape ? size.height / 3.8 : size.width / 3,
-        height: orientation == Orientation.landscape ? size.height / 3.8 : size.width / 3,
-        margin: const EdgeInsets.all(10),
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: const Color.fromRGBO(96, 81, 196, 1),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.black12),
-          boxShadow: const [
-            BoxShadow(color: Colors.black38, blurRadius: 8, offset: Offset(1, 2))
-          ],
-          gradient:  LinearGradient(colors: [
-            color ?? const Color.fromRGBO(96, 81, 196, 1),
-            const Color.fromARGB(255, 65, 55, 133),
-          ])
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 5, top: 8),
-                      child: Text(title ?? "Menu", style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold), maxLines: 2),
-                    ),
+      child: Stack(
+        children: [
+          Container(
+            width: orientation == Orientation.landscape ? size.height / 3.8 : size.width / 3,
+            height: orientation == Orientation.landscape ? size.height / 3.8 : size.width / 3,
+            margin: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color.fromRGBO(96, 81, 196, 1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.black12),
+              boxShadow: const [
+                BoxShadow(color: Colors.black38, blurRadius: 8, offset: Offset(1, 2))
+              ],
+              gradient:  LinearGradient(colors: [
+                color ?? const Color.fromRGBO(96, 81, 196, 1),
+                const Color.fromARGB(255, 65, 55, 133),
+              ])
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 5, top: 8),
+                          child: Text(title ?? "Menu", style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold), maxLines: 2),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Image.asset(urlImage ?? 'assets/images/place.png')
+                    ],
+                  ),
+                ),
+              ],
             ),
-            Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Image.asset(urlImage ?? 'assets/images/place.png')
-                ],
+          ),
+          isCommingSoon == true || isCommingSoon != null ? 
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
+            child: Container(
+              margin: const EdgeInsets.all(10),
+              width: orientation == Orientation.landscape ? size.height / 3.8 : size.width / 3,
+              height: orientation == Orientation.landscape ? size.height / 3.8 : size.width / 3,
+              decoration: BoxDecoration(
+                color: Colors.black45,
+                borderRadius: BorderRadius.circular(20)
               ),
-            ),
-          ],
-        ),
+              child: const Center(
+                child: Text("Comming Soon", style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+              ),
+            )
+          ) : const SizedBox()
+        ],
       ),
     );
   }
@@ -616,6 +686,282 @@ class _TimeDistribusiState extends State<TimeDistribusi> {
           const SizedBox(height: 3),
           Text(name ?? "Name", style: const TextStyle(color: Colors.white70, fontSize: 14), maxLines: 2, textAlign: TextAlign.center)
         ],
+      ),
+    );
+  }
+}
+
+
+class DaftarDonaturView extends StatefulWidget {
+  const DaftarDonaturView({super.key});
+
+  @override
+  State<DaftarDonaturView> createState() => _DaftarDonaturViewState();
+}
+
+class _DaftarDonaturViewState extends State<DaftarDonaturView> {
+
+  RxInt selectedIndex = 0.obs;
+  RxString query = "".obs;
+  TrackingController trackingController = Get.put(TrackingController());
+
+  // RxList temporaryData = [].obs;
+  RxList searchResult = [].obs;
+  // RxBool showContainer = false.obs;
+ 
+  // void onQueryChanged(String newQuery){
+  //   searchResult.value = temporaryData.where((item) => item.toLowerCase().contains(newQuery.toLowerCase())).toList();
+  // }
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(seconds: 1), (){
+      trackingController.getDaftarJadwal();
+    });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Size size = MediaQuery.of(context).size;
+    return GestureDetector(
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          title: const Text("Daftar Donatur"),
+          actions: [
+            Obx(() => selectedIndex.value > 0 ? CupertinoButton(child: const Icon(Bootstrap.trash), onPressed: (){}) : const SizedBox())
+          ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(40),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Obx(() => 
+                CupertinoSearchTextField(
+                  enabled: trackingController.isLoading.value ? false : true,
+                  enableIMEPersonalizedLearning: true,
+                  onSubmitted: (value) {
+                    searchResult.clear();
+                    for(var id in trackingController.listJadwalDonatur.value!.data){
+                      if(id.nama!.toLowerCase().contains(value.toLowerCase())){
+                        searchResult.add(id);
+                      }
+                    }
+                  },
+                  // onChanged: (value) {
+                  //   print(value.length);
+                  //   if(value.isEmpty || value.length < 1){
+                  //     searchResult(temporaryData.where((item) => item.nama.toLowerCase()).toList());
+                  //   }
+                  // },
+                ),
+              ),
+            )
+          ),
+        ),
+        body: Obx(() {
+          if(searchResult.length < 1){
+            return RefreshIndicator(
+            onRefresh: () async {
+              trackingController.getDaftarJadwal();
+            },
+            backgroundColor: GlobalVariable.secondaryColor,
+            color: Colors.white,
+            child: Obx(() => trackingController.isLoading.value ? SizedBox(
+              width: size.width,
+              height: size.height,
+              child: const Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(color: GlobalVariable.secondaryColor),
+                  SizedBox(height: 7),
+                  Text("Getting Data...")
+                ],
+              ),
+            ) : Obx(() => Scrollbar(
+              radius: const Radius.circular(10),
+              thickness: 8,
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  children: trackingController.listJadwalDonatur.value == null ? <Widget>[
+                    SizedBox(
+                      width: size.width,
+                      height: size.height / 1.2,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Image.asset('assets/images/no_data.png', width: size.width / 2),
+                          const Text("Tidak ada data"),
+                        ],
+                      )
+                    )
+                  ] : List.generate(trackingController.listJadwalDonatur.value!.data.length, (i) => itemCardDonatur(
+                    onPressed: (){
+                      dateTimePickerWidget(context, i);
+                    },
+                    kode: trackingController.listJadwalDonatur.value?.data[i].kode,
+                    name: trackingController.listJadwalDonatur.value?.data[i].nama,
+                    status: trackingController.listJadwalDonatur.value?.data[i].status,
+                    hari: trackingController.listJadwalDonatur.value?.data[i].hari,
+                    jam: trackingController.listJadwalDonatur.value?.data[i].jam,
+                    statusStr: trackingController.listJadwalDonatur.value?.data[i].statusStr
+                  )),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );}
+          return Obx(() => trackingController.isLoading.value ? const SizedBox() : SingleChildScrollView(
+              child: Column(
+                children: List.generate(searchResult.length, (i){
+                  return 
+                  itemCardDonatur(
+                    onPressed: (){
+                      dateTimePickerWidgetSearched(context, i);
+                    },
+                    kode: searchResult[i].kode,
+                    name: searchResult[i].nama,
+                    status: searchResult[i].status,
+                    hari: searchResult[i].hari,
+                    jam: searchResult[i].jam,
+                    statusStr: searchResult[i].statusStr
+                 );
+                }),
+              ),
+              ),
+          );
+          }
+        ),
+      ),
+    );
+  }
+
+  dateTimePickerWidget(BuildContext context, int i) {
+    return DatePicker.showDatePicker(
+      context,
+      dateFormat: 'dd MMMM yyyy HH:mm',
+      initialDateTime: DateTime.now(),
+      minDateTime: DateTime.now(),
+      maxDateTime: DateTime(2100),
+      onMonthChangeStartWithFirstDate: true,
+      onConfirm: (dateTime, List<int> index) async {
+        DateTime selectdate = dateTime;
+        final selIOS = DateFormat('yyyy-MM-dd HH:mm:ss').format(selectdate);
+        await trackingController.updateTanggalPengambilan(
+          date: selIOS,
+          donaturRuteID: trackingController.listJadwalDonatur.value!.data[i].id
+        ).then((result){
+          if(result){
+            Get.snackbar("Berhasil", trackingController.responseMessage.value, backgroundColor: Colors.green, colorText: Colors.white);
+            trackingController.getDaftarJadwal().then((done) => Get.back());
+          }else{
+            Get.back();
+            Get.snackbar("Berhasil", trackingController.responseMessage.value, backgroundColor: Colors.red, colorText: Colors.white);
+          }
+        });
+      },
+    );
+  }
+
+  dateTimePickerWidgetSearched(BuildContext context, int i) {
+    return DatePicker.showDatePicker(
+      context,
+      dateFormat: 'dd MMMM yyyy HH:mm',
+      initialDateTime: DateTime.now(),
+      minDateTime: DateTime.now(),
+      maxDateTime: DateTime(2100),
+      onMonthChangeStartWithFirstDate: true,
+      onConfirm: (dateTime, List<int> index) async {
+        DateTime selectdate = dateTime;
+        final selIOS = DateFormat('yyyy-MM-dd HH:mm:ss').format(selectdate);
+        await trackingController.updateTanggalPengambilan(
+          date: selIOS,
+          donaturRuteID: searchResult[i].id
+        ).then((result){
+          if(result){
+            Get.snackbar("Berhasil", trackingController.responseMessage.value, backgroundColor: Colors.green, colorText: Colors.white);
+            trackingController.getDaftarJadwal().then((done) => Get.back());
+          }else{
+            Get.back();
+            Get.snackbar("Berhasil", trackingController.responseMessage.value, backgroundColor: Colors.red, colorText: Colors.white);
+          }
+        });
+      },
+    );
+  }
+
+  CupertinoButton itemCardDonatur({Function()? onPressed, String? name, String? status, String? kode, String? jam, String? hari, String? statusStr}){
+    return CupertinoButton(
+      onPressed: onPressed,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      child: Container(
+        padding: const EdgeInsets.all(13),
+        decoration: BoxDecoration(
+          color: const Color.fromRGBO(96, 81, 196, 1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.black12),
+          boxShadow: const [
+            BoxShadow(color: Colors.black38, blurRadius: 8, offset: Offset(1, 2))
+          ],
+          gradient: LinearGradient(
+            colors: hari != null || jam != null ? const [
+              Color.fromRGBO(81, 196, 127, 1),
+              Color.fromARGB(255, 55, 133, 107),
+            ] : const [
+              Color.fromRGBO(96, 81, 196, 1),
+              Color.fromARGB(255, 65, 55, 133),
+            ]
+          )
+        ),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(child: Text(name ?? "Tidak ada nama", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white), maxLines: 2)),
+                Text(kode ?? "ASB0000", style: const TextStyle(fontSize: 14, color: Colors.white60), maxLines: 1),
+              ],  
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                const Icon(Clarity.clock_line, color: Colors.white60, size: 18),
+                const SizedBox(width: 5),
+                Text(hari ?? "Hari Kosong", style: const TextStyle(fontSize: 14, color: Colors.white60), maxLines: 1),
+                const SizedBox(width: 5),
+                const Text("-", style: TextStyle(fontSize: 14, color: Colors.white60)),
+                const SizedBox(width: 5),
+                Text("Pukul ${jam ?? '00:00 AM/PM'}", style: const TextStyle(fontSize: 14, color: Colors.white60), maxLines: 1)
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if(status == "1")
+                  const Icon(Icons.circle, size: 14, color: Colors.green)
+                else if(status == "2" || status == "3")
+                  const Icon(Icons.circle, size: 14, color: Colors.yellow)
+                else if(status == "5")
+                  const Icon(Icons.circle, size: 14, color: Colors.blue)
+                else
+                  const Icon(Icons.circle, size: 14, color: Colors.red),
+                const SizedBox(width: 5),
+                Text(statusStr ?? "Status 404", style: const TextStyle(fontSize: 14, color: Colors.white60))
+              ],
+            )
+          ],
+        ),
       ),
     );
   }
