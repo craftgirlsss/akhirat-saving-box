@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:asb_app/src/components/global/index.dart';
 import 'package:asb_app/src/controllers/tracking/tracking_controller.dart';
-import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/menu_hari_h.dart';
+import 'package:asb_app/src/views/mainpage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -21,7 +21,6 @@ class _CekKeberangkatanState extends State<CekKeberangkatan> {
   RxString urlPhotoHelm = ''.obs;
   RxString urlPhotoSepatu = ''.obs;
   RxString urlPhotoMotor = ''.obs;
-  RxString urlPhotoKaleng = ''.obs;
   TextEditingController notesController = TextEditingController();
   ScrollController scrollController = ScrollController();
   TrackingController trackingController = Get.put(TrackingController());
@@ -132,15 +131,7 @@ class _CekKeberangkatanState extends State<CekKeberangkatan> {
                           onPressed: trackingController.isLoading.value ? null : (){
                             pickImageFromCameraMotor();
                           },
-                          child: boxAddingCamera(name: "Motor", urlImage: urlPhotoMotor.value != "" ? urlPhotoMotor.value : null)
-                        ),
-                      ),
-                      Obx(() => CupertinoButton(
-                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
-                          onPressed: trackingController.isLoading.value ? null : (){
-                            pickImageFromKaleng();
-                          },
-                          child: boxAddingCamera(name: "Kaleng", urlImage: urlPhotoKaleng.value != "" ? urlPhotoKaleng.value : null)
+                          child: boxAddingCamera(name: "Motor dan Kaleng", urlImage: urlPhotoMotor.value != "" ? urlPhotoMotor.value : null)
                         ),
                       ),
                     ],
@@ -211,7 +202,7 @@ class _CekKeberangkatanState extends State<CekKeberangkatan> {
             color: GlobalVariable.secondaryColor,
             onPressed: trackingController.isLoading.value ? (){} : () async {
               // Get.to(() => const DaftarLokasiTagihanv2());
-              if(urlPhotoHelm.value == "" || urlPhotoMotor.value == "" || urlPhotoSepatu.value == "" || urlPhotoKaleng.value == ""){
+              if(urlPhotoHelm.value == "" || urlPhotoMotor.value == "" || urlPhotoSepatu.value == ""){
                 Get.snackbar("Gagal", "Mohon isikan semua foto keberangkatan", backgroundColor: Colors.red, colorText: Colors.white);
               }else{
                 if(widget.isGoBack == null || widget.isGoBack == false){
@@ -223,12 +214,25 @@ class _CekKeberangkatanState extends State<CekKeberangkatan> {
                   )){
                     trackingController.wasSelfieAsFirst.value = true;
                     Get.snackbar("Berhasil", "Berhasil upload foto keberangkatan", backgroundColor: Colors.green, colorText: Colors.white);
-                    Future.delayed(const Duration(seconds: 2), (){
-                      Get.offAll(() => const MenuHariH());
+                    Future.delayed(const Duration(seconds: 1), (){
+                      trackingController.checkingSelfFirst();
+                      Get.off(() => const Mainpage());
                     });
                   }
                 }else{
-                  print("Function Post Pulang");
+                  if(await trackingController.postDoneWorkForToday(
+                    description: notesController.text, 
+                    urlImage1: urlPhotoHelm.value,
+                    urlImage2: urlPhotoSepatu.value,
+                    urlImage3: urlPhotoMotor.value
+                  )){
+                    trackingController.wasSelfieAsFirst.value = true;
+                    Get.snackbar("Berhasil", "Berhasil upload foto mengakhiri pekerjaan hari ini", backgroundColor: Colors.green, colorText: Colors.white);
+                    Future.delayed(const Duration(seconds: 1), (){
+                      trackingController.checkingSelfFirst();
+                      Get.off(() => const Mainpage());
+                    });
+                  }
                 }
               }
             },
@@ -312,19 +316,4 @@ class _CekKeberangkatanState extends State<CekKeberangkatan> {
       debugPrint("Image kosong");
     }
   }
-
-  File? imageCameraKaleng;
-  pickImageFromKaleng() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? imagePicked = await picker.pickImage(source: ImageSource.camera, imageQuality: 20, preferredCameraDevice: CameraDevice.front, requestFullMetadata: true);
-    if(imagePicked != null){
-      setState(() {
-        imageCameraKaleng = File(imagePicked.path);
-        urlPhotoKaleng.value = imagePicked.path;
-      });
-    }else{
-      debugPrint("Image kosong");
-    }
-  }
-
 }

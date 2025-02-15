@@ -59,7 +59,7 @@ class _CekMapTerakhirState extends State<CekMapTerakhir> {
                 TileLayer(
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.example.app',
-                  maxNativeZoom: 12,
+                  maxNativeZoom: 19,
                   retinaMode: true,
                 ),
                  MarkerLayer(

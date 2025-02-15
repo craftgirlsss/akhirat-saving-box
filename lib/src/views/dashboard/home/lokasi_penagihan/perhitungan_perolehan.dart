@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:asb_app/src/components/alert/alert_success.dart';
 import 'package:asb_app/src/components/global/index.dart';
+import 'package:asb_app/src/components/textformfield/rounded_rectangle_text_field.dart';
 import 'package:asb_app/src/controllers/tracking/tracking_controller.dart';
 import 'package:asb_app/src/helpers/currency_formator.dart';
 import 'package:flutter/cupertino.dart';
@@ -23,7 +24,7 @@ class _PerhitunganPerolehanState extends State<PerhitunganPerolehan> {
   RxInt total = 0.obs;
   RxBool isLoading = false.obs;
   TrackingController trackingController = Get.find();
-
+  TextEditingController counterReceh = TextEditingController(text: '0');
   TextEditingController counter500 = TextEditingController(text: '0');
   TextEditingController counter1000 = TextEditingController(text: '0');
   TextEditingController counter2000 = TextEditingController(text: '0');
@@ -34,20 +35,21 @@ class _PerhitunganPerolehanState extends State<PerhitunganPerolehan> {
   TextEditingController counter100000 = TextEditingController(text: '0');
 
   int getTotal(){
-     total.value = int.parse(counter500.text) 
+     total.value = int.parse(counterReceh.text)
+    + int.parse(counter500.text) 
     + int.parse(counter1000.text) 
     + int.parse(counter2000.text) 
     + int.parse(counter5000.text)
     + int.parse(counter10000.text) 
     + int.parse(counter20000.text) 
     + int.parse(counter50000.text)
-    + int.parse(counter100000.text)
-    ;
+    + int.parse(counter100000.text);
     return total.value;
   }
 
   @override
   void dispose() {
+    counterReceh.dispose();
     counter500.dispose();
     counter1000.dispose();
     counter2000.dispose();
@@ -146,9 +148,16 @@ class _PerhitunganPerolehanState extends State<PerhitunganPerolehan> {
               PriceCounter(kelipatanUang: "20.000", controller: counter20000),
               PriceCounter(kelipatanUang: "50.000", controller: counter50000),
               PriceCounter(kelipatanUang: "100.000", controller: counter100000),
-              const SizedBox(height: 30),
+              CustomRoundedTextField(
+                controller: counterReceh,
+                keyboardType: TextInputType.number,
+                label: "Receh",
+                placeholder: "Inputkan total receh",
+                errorText: "Inputkan 0 jika tidak ada",
+              ),
+              const SizedBox(height: 5),
               const Divider(),
-              const SizedBox(height: 30),
+              const SizedBox(height: 5),
               Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: Table(
@@ -189,6 +198,7 @@ class _PerhitunganPerolehanState extends State<PerhitunganPerolehan> {
                   trackingController.hitungPerolehan(
                     jadwalID: widget.jadwaID,
                     perolehan: {
+                      "receh" : int.parse(counterReceh.text),
                       "500": int.parse(counter500.text) / 500,
                       "1000": int.parse(counter1000.text) / 1000,
                       "2000": int.parse(counter2000.text) / 2000,
@@ -310,6 +320,7 @@ class _PriceCounterState extends State<PriceCounter> {
               children:[
                 TextFormField(
                   controller: counter,
+                  keyboardType: TextInputType.number,
                   textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.green),
                   onChanged: (value) {

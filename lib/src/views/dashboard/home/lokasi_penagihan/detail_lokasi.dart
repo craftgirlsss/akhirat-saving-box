@@ -4,7 +4,9 @@ import 'package:asb_app/src/components/alert/alert_success.dart';
 import 'package:asb_app/src/components/global/index.dart';
 import 'package:asb_app/src/controllers/auth/auth_controller.dart';
 import 'package:asb_app/src/controllers/tracking/tracking_controller.dart';
+import 'package:asb_app/src/controllers/utilities/cupertino_dialogs.dart';
 import 'package:asb_app/src/controllers/utilities/location_controller.dart';
+import 'package:asb_app/src/controllers/wilayah/wilayah_controller.dart';
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/perhitungan_perolehan.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -39,6 +41,7 @@ class _DetailLokasiState extends State<DetailLokasi> with TickerProviderStateMix
   RxString indexRuteName = RxString(""); // Rute Name
   LocationController locationController = Get.find();
   TrackingController trackingController = Get.find();
+  WilayahController wilayahController = Get.find();
   late final _animatedMapController = AnimatedMapController(vsync: this);
   AuthController authController = Get.find();
   MapController mapController = MapController();
@@ -52,6 +55,10 @@ class _DetailLokasiState extends State<DetailLokasi> with TickerProviderStateMix
   RxBool showTrackRoutes = false.obs;
   var result = "".obs;
   RxString setNameLocationFromLatLong = "".obs;
+
+  TextEditingController latitude = TextEditingController();
+  TextEditingController longitude = TextEditingController();
+  TextEditingController keteranganEdit = TextEditingController();
 
   Future getDestinationLocation() async {
     locationController.isLoading(true);
@@ -95,30 +102,24 @@ class _DetailLokasiState extends State<DetailLokasi> with TickerProviderStateMix
     super.initState();
     Future.delayed(Duration.zero, (){
       setStatus();
-      // if(status.value == "2"){
-      //   getDestinationLocation();
-      //   showTrackRoutes(true);
-      // }
-      // print("fungsi dijalankan");
-      // trackingController.checkDetailsOfDonatur(code: widget.code, token: authController.token.value);
-      // print("fungsi checkDetailsOfDonatur() sudah dijalankan dan akan menjalankan getAddressFromLangitudeAndLongitudeForDonatur()");
       locationController.getAddressFromLangitudeAndLongitudeForDonatur(latitude: widget.latitude, longitude: widget.longitude);
-      // print("fungsi getAddressFromLangitudeAndLongitudeForDonatur() sudah dijalankaan");
     });
   }
 
   @override
   void dispose() {
     catatanKhusus.dispose();
+    latitude.dispose();
+    longitude.dispose();
+    keteranganEdit.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    // LatLng myPlace = LatLng(locationController.myLatitude.value, locationController.myLongitude.value);
     return Scaffold(
-      backgroundColor: status.value == "5" ? Colors.yellow.shade200 : Colors.white,
+      backgroundColor: widget.status == "5" ? Colors.yellow.shade200 : Colors.white,
       appBar: AppBar(
         leading: IconButton(
           onPressed: (){
@@ -126,7 +127,26 @@ class _DetailLokasiState extends State<DetailLokasi> with TickerProviderStateMix
           }, 
           icon: const Icon(Iconsax.arrow_left_2_bold, size: 30,)
         ),
-        backgroundColor: status.value == "5" ? Colors.yellow.shade200 : Colors.white,
+        actions: [
+          CupertinoButton(
+            padding: EdgeInsets.zero,
+            onPressed: (){
+              _showAlertDialogEditLatLongKosong(context, isEdit: false, name: widget.name);
+            },
+            child: const Icon(CupertinoIcons.plus, color: GlobalVariable.secondaryColor)
+          ),
+          CupertinoButton(
+            padding: EdgeInsets.zero,
+            onPressed: (){
+              showAlertDialog(context, title: "Informasi", content: """
+1. Tombol Batal Ambil terdapat 3 menu, diantaranya Setengah Perjalanan, Tercapai, dan Tidak Tercapai.
+2. Konfirmasi Pengambilan yaitu jika anda sudah sampai pada tempat donatur dan mengambil, anda harus mengonfirmasi pengambilan dengan menekan tombol "Konfirmasi Pengambilan"
+""", onOK: (){Navigator.pop(context);});
+            },
+            child: const Icon(CupertinoIcons.info, color: GlobalVariable.secondaryColor), 
+          )
+        ],
+        backgroundColor: widget.status == "5" ? Colors.yellow.shade200 : Colors.white,
         title: Column(
           children: [
             Text(widget.name ?? "Tidak ada Nama", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
@@ -175,7 +195,7 @@ class _DetailLokasiState extends State<DetailLokasi> with TickerProviderStateMix
                             markers: [
                               Marker(
                                 rotate: true,
-                                point: LatLng(widget.latitude!, widget.longitude!),
+                                point: LatLng(widget.latitude ?? 0, widget.longitude ?? 0),
                                 child: const Icon(Icons.place_rounded, color: Colors.red)
                               ),
                               Marker(
@@ -272,6 +292,13 @@ class _DetailLokasiState extends State<DetailLokasi> with TickerProviderStateMix
             ),
             ListTile(
               leading: const Icon(Icons.place, color: GlobalVariable.secondaryColor),
+              trailing: CupertinoButton(
+                padding: EdgeInsets.zero, 
+                onPressed: (){
+                  _showAlertDialogEditLatLongKosong(context, lokasiID: wilayahController.lokasiDonaturModels.value?.data[0].id, name: widget.name, isEdit: true);
+                },
+                child: const Text("Edit", style: TextStyle(color: GlobalVariable.secondaryColor, fontWeight: FontWeight.bold)), 
+              ),
               title: Text("Lokasi Donatur", style: GoogleFonts.poppins(color: Colors.black54, fontWeight: FontWeight.bold)),
               subtitle: Obx(() => Text(locationController.donaturLocation.value, style: const TextStyle(fontSize: 12, color: Colors.black54))),
             ),
@@ -287,248 +314,87 @@ class _DetailLokasiState extends State<DetailLokasi> with TickerProviderStateMix
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Obx(() {
-          if(status.value == "1"){
-            return ElevatedButton(
-              onPressed: (){
-                showAlertDialog(
-                  context, 
-                  content: "Apakah anda yakin ingin mengkonfirmasi pengambilan rute?", 
-                  title: "Konfirmasi Selesai", 
-                  onOK: (){
-                    Navigator.pop(context);
-                    showModalBottomSheet<void>(
-                      isScrollControlled: true,
-                      context: context,
-                      builder: (BuildContext context) {
-                        return FractionallySizedBox(
-                          heightFactor: 0.8,
-                          child: StatefulBuilder(
-                            builder: (context, setState) {
-                              return Obx(() => Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-                                  height: size.height /1.2,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    border: Border.all(color: Colors.black45),
-                                    borderRadius: BorderRadius.circular(15),
-                                  ),
-                                  child: imageProofList.isEmpty ? Center(
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: <Widget>[
-                                        const Icon(Icons.add_a_photo_rounded, size: 50, color: Colors.black45),
-                                        const SizedBox(height: 5),
-                                        ElevatedButton(
-                                          style: ElevatedButton.styleFrom(backgroundColor: GlobalVariable.secondaryColor, elevation: 0),
-                                          child: Text('Tambahkan Bukti', style: GoogleFonts.poppins(color: Colors.white)),
-                                          onPressed: () {
-                                            pickImageFromCamera();
-                                          },
-                                        ),
-                                        const SizedBox(height: 10),
-                                        Text("Tambahkan foto sebagai bukti bahwa anda telah selesai melakukan pengambilan donasi", style: GoogleFonts.poppins(color: Colors.black54), textAlign: TextAlign.center)
-                                      ],
-                                    ),
-                                  ) : SizedBox(
-                                    width: size.width,
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Column(
-                                          children: [
-                                            Text("Tambah Bukti Pengambilan", style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black54)),
-                                            const SizedBox(height: 20),
-                                            SingleChildScrollView(
-                                              scrollDirection: Axis.horizontal,
-                                              child: Obx(() => Row(
-                                                  children: List.generate(
-                                                    imageProofList.length + 1, 
-                                                    (i) {
-                                                      if(i != imageProofList.length){
-                                                        return Container(
-                                                          width: 100,
-                                                          height: 100,
-                                                          clipBehavior: Clip.hardEdge,
-                                                          margin: const EdgeInsets.symmetric(horizontal: 5),
-                                                          decoration: BoxDecoration(
-                                                            color: Colors.transparent,
-                                                            border: Border.all(color: Colors.black45),
-                                                            borderRadius: BorderRadius.circular(5),
-                                                          ),
-                                                          child: Image.file(File(imageProofList[i]), fit: BoxFit.cover,),
-                                                        );
-                                                      }
-                                                      return CupertinoButton(
-                                                        padding: EdgeInsets.zero,
-                                                        onPressed: (){
-                                                          pickImageFromCamera();
-                                                        },
-                                                        child: Container(
-                                                          width: 100,
-                                                          height: 100,
-                                                          padding: const EdgeInsets.all(15),
-                                                          decoration: BoxDecoration(
-                                                            color: Colors.transparent,
-                                                            border: Border.all(color: Colors.black26),
-                                                            borderRadius: BorderRadius.circular(5)
-                                                          ),
-                                                          child: const Icon(Icons.add_a_photo, color: Colors.black45),
-                                                        ),
-                                                      );
-                                                    }
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(height: 20),
-                                            Text("Tambah Catatan Khusus (Opsional)", style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black54)),
-                                            const SizedBox(height: 5),
-                                            TextField(
-                                              maxLines: 5,
-                                              minLines: 5,
-                                              controller: catatanKhusus,
-                                              decoration: InputDecoration(
-                                                hintText: "Masukkan catatan khusus..",
-                                                border: OutlineInputBorder(
-                                                  borderSide: const BorderSide(color: Colors.black38),
-                                                  borderRadius: BorderRadius.circular(10),
-                                                ),
-                                                enabledBorder: OutlineInputBorder(
-                                                  borderSide: const BorderSide(color: Colors.black38),
-                                                  borderRadius: BorderRadius.circular(10),
-                                                ),
-                                                errorBorder: OutlineInputBorder(
-                                                  borderSide: const BorderSide(color: Colors.red),
-                                                  borderRadius: BorderRadius.circular(10),
-                                                ),
-                                                focusedBorder: OutlineInputBorder(
-                                                  borderSide: const BorderSide(color: Colors.black38),
-                                                  borderRadius: BorderRadius.circular(10),
-                                                ),
-                                              ),
-                                            )
-                                          ],
-                                        ),
-                                        Obx(() => CupertinoButton(
-                                          color: GlobalVariable.secondaryColor, 
-                                          onPressed: trackingController.isLoading.value ? null : () async {
-                                            await locationController.getCurrentLocation().then((result) {
-                                              trackingController.selesaiAmbil(
-                                                jadwalID: widget.jadwaID,
-                                                catatanKhusus: catatanKhusus.text,
-                                                photos: imageProofList,
-                                                lat: locationController.myLatitude.value,
-                                                long: locationController.myLongitude.value,
-                                              ).then((result) {
-                                                if(result){
-                                                  imageProofList.value = [];
-                                                  catatanKhusus.clear();
-                                                  status('3');
-                                                  alertSuccess(context, title: "Berhasil", content: "Berhasil uplaod foto bukti pengambilan kotak", onOK: (){
-                                                    Navigator.of(context)..pop()..pop();
-                                                  });
-                                                }else{
-                                                  Get.snackbar("Gagal", trackingController.responseMessage.value, backgroundColor: Colors.red, colorText: Colors.white);
-                                                }
-                                              });
-                                            });
-                                          },
-                                          child: Obx(() => trackingController.isLoading.value || locationController.isLoading.value ? const CupertinoActivityIndicator() : const Text("Submit")), 
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
+          if(status.value == "1" || status.value == "5"){
+            return Row(
+              children: [
+                Expanded(
+                  child: Obx(() => OutlinedButton(
+                      onPressed: trackingController.isLoading.value ? null : (){
+                        customCupertinoDialogActionSheet(context,
+                          child: CupertinoActionSheet(
+                            title: const Text('Batalkan Pengambilan'),
+                            message: const Text('Pilih jenis batal'),
+                            cancelButton: CupertinoActionSheetAction(
+                              isDefaultAction: true,
+                              isDestructiveAction: true,
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              child: const Text('Batal'),
+                            ),
+                            actions: <CupertinoActionSheetAction>[
+                              CupertinoActionSheetAction(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  _showAlertDialogBatalkan(context, jadwalID: widget.jadwaID, name: widget.name, status: "7");
+                                },
+                                child: const Text('Setengah Perjalanan'),
+                              ),
+                              CupertinoActionSheetAction(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  _showAlertDialogBatalkan(context, jadwalID: widget.jadwaID, name: widget.name, status: "8");
+                                },
+                                child: const Text('Tercapai'),
+                              ),
+                              CupertinoActionSheetAction(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  _showAlertDialogBatalkan(context, jadwalID: widget.jadwaID, name: widget.name, status: "6");
+                                },
+                                child: const Text('Tidak Tercapai'),
+                              )
+                            ],
+                          )
                         );
                       },
-                    );
-                  }
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                elevation: 0
-              ),
-              child: const Text("Konfirmasi Pengambilan", style: TextStyle(color: Colors.white))
-            );
-          }else if(status.value == "3"){
-            return ElevatedButton(
-              onPressed: (){
-                Get.to(() => PerhitunganPerolehan(jadwaID: widget.jadwaID, ruteName: widget.name));
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                elevation: 0
-              ),
-              child: const Text("Hitung Perolehan", style: TextStyle(color: Colors.white))
-            );
-          }
-          return Container();
-          /*
-          if(status.value == '0'){
-            return Container();
-          }else{
-            if(status.value == '2'){
-              return Row(
-                children: [
-                  Expanded(
-                    child: Obx(() => OutlinedButton(
-                        onPressed: trackingController.isLoading.value ? null : (){
-                          showAlertDialog(
-                            context, 
-                            content: "Apakah anda yakin ingin membatalkan pengambilan rute?", 
-                            title: "Konfirmasi pembatalan", 
-                            onOK: (){
-                              // Navigator.pop(context);
-                              // trackingController.batalkanPengambilanRute(jadwalID: widget.jadwaID).then((result){
-                              //   if(result){
-                              //     Get.snackbar("Berhasil", trackingController.responseMessage.value, backgroundColor: Colors.green, colorText: Colors.white);
-                              //   }else{
-                              //     Get.snackbar("Gagal", trackingController.responseMessage.value, backgroundColor: Colors.green, colorText: Colors.white);
-                              //   }
-                              // });
-                            }
-                          );
-                        },
-                        style: OutlinedButton.styleFrom(
-                          elevation: 0,
-                          backgroundColor: Colors.white,
-                          side: const BorderSide(
-                            width: 1.5,
-                            color: GlobalVariable.secondaryColor
-                          )
-                        ),
-                        child: const Text("Batal Ambil", style: TextStyle(color: GlobalVariable.secondaryColor))
+                      style: OutlinedButton.styleFrom(
+                        elevation: 0,
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(
+                          width: 1.5,
+                          color: GlobalVariable.secondaryColor
+                        )
                       ),
-                    )
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: (){
-                        showAlertDialog(
-                          context, 
-                          content: "Apakah anda yakin ingin mengkonfirmasi pengambilan rute?", 
-                          title: "Konfirmasi Selesai", 
-                          onOK: (){
-                            Navigator.pop(context);
-                            showModalBottomSheet<void>(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return StatefulBuilder(
+                      child: const Text("Batal Ambil", style: TextStyle(color: GlobalVariable.secondaryColor))
+                    ),
+                  )
+                ),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: (){
+                      showAlertDialog(
+                        context, 
+                        content: "Apakah anda yakin ingin mengkonfirmasi pengambilan rute?", 
+                        title: "Konfirmasi Selesai", 
+                        onOK: (){
+                          Navigator.pop(context);
+                          showModalBottomSheet<void>(
+                            isScrollControlled: true,
+                            context: context,
+                            builder: (BuildContext context) {
+                              return FractionallySizedBox(
+                                heightFactor: 0.8,
+                                child: StatefulBuilder(
                                   builder: (context, setState) {
                                     return Obx(() => Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-                                        height: size.height / 2,
+                                        height: size.height /1.2,
                                         decoration: BoxDecoration(
                                           color: Colors.white,
                                           border: Border.all(color: Colors.black45),
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(15),
                                         ),
                                         child: imageProofList.isEmpty ? Center(
                                           child: Column(
@@ -599,27 +465,60 @@ class _DetailLokasiState extends State<DetailLokasi> with TickerProviderStateMix
                                                       ),
                                                     ),
                                                   ),
+                                                  const SizedBox(height: 20),
+                                                  Text("Tambah Catatan Khusus (Opsional)", style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black54)),
+                                                  const SizedBox(height: 5),
+                                                  TextField(
+                                                    maxLines: 5,
+                                                    minLines: 5,
+                                                    controller: catatanKhusus,
+                                                    decoration: InputDecoration(
+                                                      hintText: "Masukkan catatan khusus..",
+                                                      border: OutlineInputBorder(
+                                                        borderSide: const BorderSide(color: Colors.black38),
+                                                        borderRadius: BorderRadius.circular(10),
+                                                      ),
+                                                      enabledBorder: OutlineInputBorder(
+                                                        borderSide: const BorderSide(color: Colors.black38),
+                                                        borderRadius: BorderRadius.circular(10),
+                                                      ),
+                                                      errorBorder: OutlineInputBorder(
+                                                        borderSide: const BorderSide(color: Colors.red),
+                                                        borderRadius: BorderRadius.circular(10),
+                                                      ),
+                                                      focusedBorder: OutlineInputBorder(
+                                                        borderSide: const BorderSide(color: Colors.black38),
+                                                        borderRadius: BorderRadius.circular(10),
+                                                      ),
+                                                    ),
+                                                  )
                                                 ],
                                               ),
                                               Obx(() => CupertinoButton(
                                                 color: GlobalVariable.secondaryColor, 
-                                                onPressed: trackingController.isLoading.value ? null : (){
-                                                  trackingController.selesaiAmbil(
-                                                    jadwalID: widget.jadwaID,
-                                                    photos: imageProofList
-                                                  ).then((result) {
-                                                    if(result){
-                                                      imageProofList.value = [];
-                                                      status('3');
-                                                      alertSuccess(context, title: "Berhasil", content: "Berhasil uplaod foto bukti pengambilan kotak", onOK: (){
-                                                        Navigator.of(context)..pop()..pop();
-                                                      });
-                                                    }else{
-                                                      Get.snackbar("Gagal", trackingController.responseMessage.value, backgroundColor: Colors.red, colorText: Colors.white);
-                                                    }
+                                                onPressed: trackingController.isLoading.value ? null : () async {
+                                                  await locationController.getCurrentLocation().then((result) {
+                                                    trackingController.selesaiAmbil(
+                                                      jadwalID: widget.jadwaID,
+                                                      catatanKhusus: catatanKhusus.text,
+                                                      photos: imageProofList,
+                                                      lat: locationController.myLatitude.value,
+                                                      long: locationController.myLongitude.value,
+                                                    ).then((result) {
+                                                      if(result){
+                                                        imageProofList.value = [];
+                                                        catatanKhusus.clear();
+                                                        status('3');
+                                                        alertSuccess(context, title: "Berhasil", content: "Berhasil uplaod foto bukti pengambilan kotak", onOK: (){
+                                                          Navigator.of(context)..pop()..pop();
+                                                        });
+                                                      }else{
+                                                        Get.snackbar("Gagal", trackingController.responseMessage.value, backgroundColor: Colors.red, colorText: Colors.white);
+                                                      }
+                                                    });
                                                   });
                                                 },
-                                                child: const Text("Submit"), 
+                                                child: Obx(() => trackingController.isLoading.value || locationController.isLoading.value ? const CupertinoActivityIndicator() : const Text("Submit")), 
                                                 ),
                                               )
                                             ],
@@ -628,116 +527,205 @@ class _DetailLokasiState extends State<DetailLokasi> with TickerProviderStateMix
                                       ),
                                     );
                                   },
-                                );
-                              },
-                            );
-                          }
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        elevation: 0
-                      ),
-                      child: const Text("Selesai", style: TextStyle(color: Colors.white))
-                    )
-                  ),
-                ],
-              );
-            }else if(status.value == '1'){
-              return Obx(() => ElevatedButton(
-                  onPressed: trackingController.isLoading.value ? null : (){
-                    showAlertDialog(
-                      context, 
-                      content: "Apakah anda yakin ingin memulai pengambilan rute?", 
-                      title: "Konfirmasi Pengambilan", 
-                      onOK: (){
-                        Navigator.pop(context);
-                        trackingController.ambilRute(jadwaID: widget.jadwaID).then((result){
-                          if(result){
-                            status('2');
-                            getDestinationLocation();
-                            showTrackRoutes(true);
-                            Get.snackbar("Berhasil", trackingController.responseMessage.value, backgroundColor: Colors.green, colorText: Colors.white);
-                          }else{
-                            Get.snackbar("Gagal", trackingController.responseMessage.value, backgroundColor: Colors.red, colorText: Colors.white);
-                          }
-                        });
-                      }
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    elevation: 0
-                  ),
-                  child: const Text("Ambil Sekarang", style: TextStyle(color: Colors.white))
-                ),
-              );
-            }else if(status.value == '3'){
-              return ElevatedButton(
-                onPressed: (){
-                  Get.to(() => PerhitunganPerolehan(jadwaID: widget.jadwaID, ruteName: widget.name));
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  elevation: 0
-                ),
-                child: const Text("Hitung Perolehan Kotak Amal", style: TextStyle(color: Colors.white))
-              );
-            }else if(status.value == '4'){
-              return ElevatedButton(
-                onPressed: (){
-                  Get.to(() => PerhitunganPerolehan(jadwaID: widget.jadwaID, ruteName: widget.name));
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  elevation: 0
-                ),
-                child: const Text("Lihat Kwitansi Perolehan", style: TextStyle(color: Colors.white))
-              );
-            }else if(status.value == '5'){
-              return Obx(() => ElevatedButton(
-                onPressed: trackingController.isLoading.value ? null : (){
-                  showAlertDialog(
-                    context, 
-                    content: "Apakah anda yakin ingin memulai pengambilan rute?", 
-                    title: "Konfirmasi Pengambilan", 
-                    onOK: (){
-                      Navigator.pop(context);
-                      trackingController.ambilRute(jadwaID: widget.jadwaID).then((result){
-                        if(result){
-                          status('2');
-                          getDestinationLocation();
-                          showTrackRoutes(true);
-                          Get.snackbar("Berhasil", trackingController.responseMessage.value, backgroundColor: Colors.green, colorText: Colors.white);
-                        }else{
-                          Get.snackbar("Gagal", trackingController.responseMessage.value, backgroundColor: Colors.red, colorText: Colors.white);
+                                ),
+                              );
+                            },
+                          );
                         }
-                      });
-                    }
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  elevation: 0
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      elevation: 0
+                    ),
+                    child: const Text("Konfirmasi Pengambilan", style: TextStyle(color: Colors.white), textAlign: TextAlign.center,)
+                  ),
                 ),
-                child: const Text("Ambil Sekarang", style: TextStyle(color: Colors.white))
-              ),
+              ],
             );
-            }
+          }else if(status.value == "3"){
             return ElevatedButton(
-                onPressed: null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  elevation: 0
-                ),
-                child: const Text("Status tidak ditemukan", style: TextStyle(color: Colors.white))
-              );
-            }
-            */
+              onPressed: (){
+                Get.to(() => PerhitunganPerolehan(jadwaID: widget.jadwaID, ruteName: widget.name));
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                elevation: 0
+              ),
+              child: const Text("Hitung Perolehan", style: TextStyle(color: Colors.white))
+            );
+          }
+          return const SizedBox();
           }
         )
       ),
       
+    );
+  }
+
+  // Edit Lat Long yang kosong
+  void _showAlertDialogEditLatLongKosong(BuildContext context, {String? name = "Donatur", String? lokasiID, bool? isEdit}) {
+    showCupertinoDialog<void>(
+      context: context,
+      builder: (BuildContext context) => CupertinoAlertDialog(
+        title: const Text('Input Lokasi Donatur'),
+        content: Column(
+          children: [
+            Text('${isEdit == true ? "Edit" : "Tambah"} lokasi donatur, mohon untuk isi point Latitude dan Longitude donatur $name'),
+            const SizedBox(height: 5),
+            CupertinoTextField(
+              placeholder: "Latitude",
+              placeholderStyle: const TextStyle(fontSize: 12, color: Colors.black26),
+              controller: latitude,
+            ),
+            const SizedBox(height: 5),
+            CupertinoTextField(
+              placeholder: "Longitude",
+              placeholderStyle: const TextStyle(fontSize: 12, color: Colors.black26),
+              controller: longitude,
+            ),
+            const SizedBox(height: 5),
+            CupertinoTextField(
+              placeholder: "Keterangan",
+              placeholderStyle: const TextStyle(fontSize: 12, color: Colors.black26),
+              controller: keteranganEdit,
+            ),
+            const SizedBox(height: 5),
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: const Row(
+                children: [
+                  Icon(CupertinoIcons.location, size: 20),
+                  SizedBox(width: 5),
+                  Expanded(child: Text("Dapatkan dari lokasi saya saat ini?", textAlign: TextAlign.start, style: TextStyle(fontSize: 12)))
+                ],
+              ), 
+              onPressed: (){
+                locationController.getLatLongMe().then((result){
+                  latitude.text = locationController.latMe.value.toString();
+                  longitude.text = locationController.longMe.value.toString();
+                });
+              }
+            )
+          ],
+        ),
+        actions: <CupertinoDialogAction>[
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () {
+              latitude.clear();
+              longitude.clear();
+              keteranganEdit.clear();
+              Navigator.pop(context);
+            },
+            child: const Text('No'),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () async {
+              if(isEdit == true){
+                wilayahController.editLokasiDonaturByIdLokasi(
+                  keterangan: keteranganEdit.text,
+                  lat: latitude.text,
+                  long: longitude.text,
+                  lokasiID: lokasiID
+                ).then((result) {
+                  Navigator.pop(context);
+                  if(result){
+                    latitude.clear();
+                    longitude.clear();
+                    keteranganEdit.clear();
+                    Get.snackbar("Berhasil", wilayahController.responseString.value, backgroundColor: Colors.green, colorText: Colors.white);
+                  }else{
+                    latitude.clear();
+                    longitude.clear();
+                    keteranganEdit.clear();
+                    Navigator.pop(context);
+                    Get.snackbar("Gagal", wilayahController.responseString.value, backgroundColor: Colors.red, colorText: Colors.white);
+                  }
+                });
+              }else{
+                wilayahController.tambahLokasiDonaturByIdLokasi(
+                  keterangan: keteranganEdit.text,
+                  lat: latitude.text,
+                  long: longitude.text,
+                  donaturKode: widget.kodeASB
+                ).then((result) {
+                  Navigator.pop(context);
+                  if(result){
+                    latitude.clear();
+                    longitude.clear();
+                    keteranganEdit.clear();
+                    Get.snackbar("Berhasil", wilayahController.responseString.value, backgroundColor: Colors.green, colorText: Colors.white);
+                  }else{
+                    latitude.clear();
+                    longitude.clear();
+                    keteranganEdit.clear();
+                    Navigator.pop(context);
+                    Get.snackbar("Gagal", wilayahController.responseString.value, backgroundColor: Colors.red, colorText: Colors.white);
+                  }
+                });
+              }
+            },
+            child: const Text('Yes'),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+  // Batalkan Pengambilan
+  void _showAlertDialogBatalkan(BuildContext context, {String? name = "Donatur", String? jadwalID, String? status}) {
+    showCupertinoDialog<void>(
+      context: context,
+      builder: (BuildContext context) => CupertinoAlertDialog(
+        title: const Text('Cancel Program'),
+        content: Column(
+          children: [
+            Text('Batalkan pengambilan kaleng pada donatur $name'),
+            const SizedBox(height: 5),
+            CupertinoTextField(
+              placeholder: "Keterangan",
+              placeholderStyle: const TextStyle(fontSize: 12, color: Colors.black26),
+              controller: keteranganEdit,
+            ),
+            const SizedBox(height: 5),
+          ],
+        ),
+        actions: <CupertinoDialogAction>[
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('No'),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () async {
+              Navigator.pop(context);
+              locationController.getLatLongMe().then((result){
+                wilayahController.cancelLokasiDonaturByIdLokasi(
+                  jadwalID: jadwalID,
+                  keterangan: keteranganEdit.text,
+                  lat: locationController.latMe.value.toString(),
+                  long: locationController.longMe.value.toString(),
+                  status: status
+                ).then((value) {
+                  if(value){
+                    Get.snackbar("Berhasil", wilayahController.responseString.value, backgroundColor: Colors.green, colorText: Colors.white);
+                  }else{
+                    Get.snackbar("Gagal", wilayahController.responseString.value, backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
+                  }
+                });
+              });
+              keteranganEdit.clear();
+            },
+            child: const Text('Yes'),
+          ),
+        ],
+      ),
     );
   }
 

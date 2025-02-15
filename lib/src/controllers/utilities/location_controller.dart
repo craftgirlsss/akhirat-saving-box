@@ -14,6 +14,9 @@ class LocationController extends GetxController {
   var myLatitude = RxDouble(0);
   var myLongitude = RxDouble(0);
   var distanceBetweenMeAndOffice = 0.obs;
+  RxDouble latMe = 0.0.obs; // untuk mendapatkan lokasi tim distribusi untuk pengisian data alamat donatur yang belum ada
+  RxDouble longMe = 0.0.obs; // untuk mendapatkan lokasi tim distribusi untuk pengisian data alamat donatur yang belum ada
+  RxString addressMe = "".obs; // untuk mendapatkan lokasi tim distribusi untuk pengisian data alamat donatur yang belum ada
   var currentOfficeLatitude = RxDouble(-7.4396182);
   var currentOfficeLongitude = RxDouble(112.7184);
   Position? positioned;
@@ -104,6 +107,16 @@ class LocationController extends GetxController {
     myLatitude.value = position.latitude;
     myLongitude.value = position.longitude;
     myLocation.value = address;
+    isLoading(false);
+  }
+
+  Future<void> getLatLongMe() async {
+    isLoading(true);
+    Position position = await determinePosition();
+    String address = await getAddressFromLangitudeAndLongitude(position);
+    latMe(position.latitude);
+    longMe(position.longitude);
+    addressMe(address);
     isLoading(false);
   }
 }

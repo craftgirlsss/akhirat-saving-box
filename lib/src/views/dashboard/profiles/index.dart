@@ -28,9 +28,13 @@ class _AccountSettingsState extends State<AccountSettings> {
 
   @override
   Widget build(BuildContext context) {
+    Size size = MediaQuery.of(context).size;
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
+        flexibleSpace: const Image(
+          image: AssetImage('assets/images/background.jpg'),
+          fit: BoxFit.cover,
+        ),
         scrolledUnderElevation: 0,
         shadowColor: Colors.white,
         elevation: 0,
@@ -38,66 +42,76 @@ class _AccountSettingsState extends State<AccountSettings> {
         centerTitle: true,
         title: const Text("More"),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 15),
-          child: Column(
-            children: [
-              const SizedBox(height: 40),
-              const CircleAvatar(
-                minRadius: 50,
-                backgroundColor: Color.fromRGBO(229, 230, 225, 1),
-                backgroundImage: AssetImage('assets/images/background.png')
-              ),
-              const SizedBox(height: 10),
-              Obx(() => Text(authController.profileModels.value?.data.name ?? "Unknown Name", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
-              const SizedBox(height: 10),
-              Obx(() => Text(authController.profileModels.value?.data.email ?? "Unknown Email", style: const TextStyle(fontSize: 14, color: Colors.black45))),
-              const SizedBox(height: 40),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: Colors.white,
-                ),
-                child: Column(
-                  children: [
-                    utilities.cardTitle(title: "Settings"),
-                    const SizedBox(height: 6),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      onTap: (){
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => const ForgotPassword()));
-                      },
-                      dense: true,
-                      title: const Text("Ganti Password"),
-                      leading: const Icon(TeenyIcons.password, color: GlobalVariable.secondaryColor),
-                      trailing: const CupertinoListTileChevron(),
-                    ),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      onTap: (){
-                        Get.to(() => const TicketPage());
-                      },
-                      dense: true,
-                      title: const Text("Chat Support"),
-                      leading: const Icon(CupertinoIcons.bubble_left_bubble_right_fill, color: GlobalVariable.secondaryColor),
-                      trailing: const CupertinoListTileChevron(),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              Obx(() => CupertinoButton(
-                  onPressed: authController.isLoading.value ? null : () async {
-                    _showAlertDialog(context);
-                  },
-                  child: AutoSizeText("Logout", maxLines: 1, style: textStyle.defaultTextStyleMedium(color: GlobalVariable.secondaryColor, fontSize: 17))
-                ),
-              )
-            ],
+      body: Stack(
+        children: [
+          SizedBox(
+            width: size.width,
+              height: size.height,
+              child: Image.asset("assets/images/background.jpg", fit: BoxFit.cover
+            )
           ),
-        ),
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 15),
+              child: Column(
+                children: [
+                  const SizedBox(height: 40),
+                  const CircleAvatar(
+                    minRadius: 50,
+                    backgroundColor: Color.fromRGBO(229, 230, 225, 1),
+                    backgroundImage: AssetImage('assets/images/background.png')
+                  ),
+                  const SizedBox(height: 10),
+                  Obx(() => Text(authController.profileModels.value?.data.name ?? "Unknown Name", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+                  const SizedBox(height: 10),
+                  Obx(() => Text(authController.profileModels.value?.data.email ?? "Unknown Email", style: const TextStyle(fontSize: 14, color: Colors.black45))),
+                  const SizedBox(height: 40),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      color: Colors.white,
+                    ),
+                    child: Column(
+                      children: [
+                        utilities.cardTitle(title: "Settings"),
+                        const SizedBox(height: 6),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          onTap: (){
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => const ForgotPassword()));
+                          },
+                          dense: true,
+                          title: const Text("Ganti Password"),
+                          leading: const Icon(TeenyIcons.password, color: GlobalVariable.secondaryColor),
+                          trailing: const CupertinoListTileChevron(),
+                        ),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          onTap: (){
+                            Get.to(() => const TicketPage());
+                          },
+                          dense: true,
+                          title: const Text("Chat Support"),
+                          leading: const Icon(CupertinoIcons.bubble_left_bubble_right_fill, color: GlobalVariable.secondaryColor),
+                          trailing: const CupertinoListTileChevron(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Obx(() => CupertinoButton(
+                      onPressed: authController.isLoading.value ? null : () async {
+                        _showAlertDialog(context);
+                      },
+                      child: AutoSizeText("Logout", maxLines: 1, style: textStyle.defaultTextStyleMedium(color: GlobalVariable.secondaryColor, fontSize: 17))
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

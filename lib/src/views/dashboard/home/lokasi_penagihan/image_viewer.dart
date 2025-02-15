@@ -16,15 +16,18 @@ class _ImageViewerState extends State<ImageViewer> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Column(
           children: [
-            Text(widget.name ?? "Tidak ada Nama", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text("Foto Pengambilan ${widget.name}", style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 3),
             Text(widget.kodeASB ?? "Tidak ada Kode", style: const TextStyle(fontSize: 13, color: Colors.black45)),
           ],
         ),
       ),
       body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         child: Column(
           children: [
             Wrap(
@@ -32,15 +35,23 @@ class _ImageViewerState extends State<ImageViewer> {
                 return CupertinoButton(
                   padding: EdgeInsets.zero,
                   onPressed: (){
-                    ImageDialog(urlImage: widget.listPhoto?[i]);
+                    showDialog(
+                      context: context, 
+                      builder: (context) => ImageDialog(urlImage: widget.listPhoto?[i])
+                    );
                   },
                   child: Container(
-                    width: 70,
-                    height: 70,
+                    width: 120,
+                    height: 120,
+                    margin: const EdgeInsets.only(right: 5),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black38),
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.white54,
+                      border: Border.all(color: Colors.black12, width: 0.5),
+                      boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(1, 2), blurRadius: 5)],
                       image: DecorationImage(
-                        image: NetworkImage(widget.listPhoto![i]), 
+                        image: NetworkImage(widget.listPhoto![i]),
+                        fit: BoxFit.cover, 
                         onError: (exception, stackTrace) => const Center(child: Icon(Icons.image_not_supported_outlined),
                         )
                       )

@@ -37,6 +37,7 @@ class Data {
     this.rapel,
     this.jadwalRapel,
     this.status,
+    this.catatanDefault,
     this.lastUpdate,
   });
   String? id;
@@ -49,6 +50,7 @@ class Data {
   String? usia;
   String? alamat;
   String? jam;
+  String? catatanDefault;
   String? tanggalPengambilan;
   List<dynamic>? fotoPenukaran;
   LokasiPenukaran? lokasiPenukaran;
@@ -72,6 +74,7 @@ class Data {
     usia = json['usia'];
     alamat = json['alamat'];
     jam = json['jam'];
+    catatanDefault = json['catatan_default'];
     jadwalID = json['jadwal'];
     tanggalPengambilan = json['tanggal_pengambilan'];
     fotoPenukaran = List.castFrom<dynamic, dynamic>(json['foto_penukaran']);

@@ -311,6 +311,7 @@ import 'package:asb_app/src/controllers/utilities/location_controller.dart';
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/cek_keberangkatan.dart';
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/daftar_lokasi_tagihan_v2.dart';
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/daftar_lokasi_tagihan_v3.dart';
+import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/generate_kwitansi_page.dart';
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/menu_tim_distribusi.dart';
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/tambah_page_donatur.dart';
 import 'package:asb_app/src/views/dashboard/profiles/notification_pages.dart';
@@ -354,223 +355,227 @@ class _TimeDistribusiState extends State<TimeDistribusi> {
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
     Orientation orientation = MediaQuery.of(context).orientation;
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        centerTitle: false,
-        forceMaterialTransparency: true,
-        title: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Image.asset('assets/images/ic_launcher.png', width: 50),
-            const SizedBox(width: 7),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text("Akhirat SavingBox", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                Obx(() => Text("Assalamualaikum ${authController.profileModels.value?.data.name ?? 'Akhi'}", style: const TextStyle(fontSize: 14, color: Colors.black45)))
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          CupertinoButton(
-            padding: EdgeInsets.zero,
-            child: const Icon(Iconsax.notification_bold, color: GlobalVariable.secondaryColor), onPressed: (){
-              Get.to(() => const NotificationPages());
-            })
-        ],
-      ),
-
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: RefreshIndicator(
-          onRefresh: () async {
-            await locationController.getCurrentLocation();
-          },
-          child: Column(
+    return RefreshIndicator(
+      onRefresh: () async {
+        await locationController.getCurrentLocation();
+        await trackingController.checkingSelfFirst();
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          flexibleSpace: const Image(
+            image: AssetImage('assets/images/background.jpg'),
+            fit: BoxFit.cover,
+          ),
+          centerTitle: false,
+          forceMaterialTransparency: true,
+          title: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.only(left: 20, right: 0, top: 20, bottom: 20),
-                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                width: orientation == Orientation.landscape ? size.width / 2 : size.width,
-                height: orientation == Orientation.landscape ? size.height / 3 : size.width / 2.5,
-                decoration: BoxDecoration(
-                  color: const Color.fromRGBO(96, 81, 196, 1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.black12),
-                  boxShadow: const [
-                    BoxShadow(color: Colors.black38, blurRadius: 8, offset: Offset(1, 2))
-                  ],
-                  gradient: const LinearGradient(colors: [
-                    Color.fromRGBO(96, 81, 196, 1),
-                    Color.fromARGB(255, 65, 55, 133),
-                    Color.fromARGB(255, 42, 36, 87),
-                  ])
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Obx(() => locationController.isLoading.value ? const Text("Getting Location...", style: TextStyle(color: Colors.white60)) : Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Column(
+              const CircleAvatar(backgroundImage: AssetImage('assets/images/ic_launcher.png')),
+              const SizedBox(width: 7),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("Akhirat SavingBox", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Obx(() => Text("Assalamualaikum ${authController.profileModels.value?.data.name ?? 'Akhi'}", style: const TextStyle(fontSize: 14, color: Colors.black45)))
+                ],
+              ),
+            ],
+          ),
+        ),
+      
+        body: Stack(
+          children: [
+            SizedBox(
+              width: size.width,
+              height: size.height,
+              child: Image.asset("assets/images/background.jpg", fit: BoxFit.cover)),
+            SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.only(left: 20, right: 0, top: 20, bottom: 20),
+                    margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                    width: orientation == Orientation.landscape ? size.width / 2 : size.width,
+                    height: orientation == Orientation.landscape ? size.height / 3 : size.width / 2.5,
+                    decoration: BoxDecoration(
+                      color: const Color.fromRGBO(96, 81, 196, 1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.black12),
+                      boxShadow: const [
+                        BoxShadow(color: Colors.black38, blurRadius: 8, offset: Offset(1, 2))
+                      ],
+                      gradient: const LinearGradient(colors: [
+                        Color.fromRGBO(96, 81, 196, 1),
+                        Color.fromARGB(255, 65, 55, 133),
+                        Color.fromARGB(255, 42, 36, 87),
+                      ])
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Obx(() => locationController.isLoading.value ? const Text("Getting Location...", style: TextStyle(color: Colors.white60)) : Column(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text("Lokasi Anda", style: TextStyle(color: Colors.white60, fontSize: 14)),
-                              Obx(() => Text(locationController.myLocationV2.value, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)))
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text("Lokasi Anda", style: TextStyle(color: Colors.white60, fontSize: 14)),
+                                  Obx(() => Text(locationController.myLocationV2.value, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)))
+                                ],
+                              ),
+                              Obx(() => Text(locationController.myProvinsi.value, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)))
                             ],
                           ),
-                          Obx(() => Text(locationController.myProvinsi.value, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)))
-                        ],
-                      ),
+                        ),
+                        Expanded(
+                          child: Column(
+                            children: [
+                              Expanded(child: Image.asset('assets/images/place.png')),
+                              Obx(() => CupertinoButton(
+                                  padding: EdgeInsets.zero,
+                                  onPressed: locationController.isLoading.value ? null : (){
+                                    locationController.getCurrentLocation();
+                                  },
+                                  child: Obx(() => locationController.isLoading.value ? const CupertinoActivityIndicator(color: Colors.white70) : const Icon(CupertinoIcons.refresh, size: 18, color: Colors.white70)), 
+                                ),
+                              )
+                            ],
+                          ),
+                        )
+                      ],
                     ),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          Expanded(child: Image.asset('assets/images/place.png')),
-                          Obx(() => CupertinoButton(
-                              padding: EdgeInsets.zero,
-                              onPressed: locationController.isLoading.value ? null : (){
-                                locationController.getCurrentLocation();
-                              },
-                              child: Obx(() => locationController.isLoading.value ? const CupertinoActivityIndicator(color: Colors.white70) : const Icon(CupertinoIcons.refresh, size: 18, color: Colors.white70)), 
-                            ),
-                          )
-                        ],
-                      ),
-                    )
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: orientation == Orientation.landscape ? MainAxisAlignment.center :MainAxisAlignment.start,
-                  children: const [
-                    Text("Semua Menu", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                  ],
-                ),
-              ),
-                  
-              SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: orientation == Orientation.landscape ? EdgeInsets.symmetric(horizontal: size.width / 6) : null,
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    Obx(() => menuItem(size, onTap: locationController.isLoading.value ? null : () async {
-                        if(locationController.myLocationV2.value == ""){
-                          final permissionLocation = await Permission.location.status;
-                          Get.snackbar("Gagal", "Gagal mendapatkan lokasi anda", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
-                          if(permissionLocation.isDenied || permissionLocation.isPermanentlyDenied){
-                            openAppSettings();
-                          }
-                        }else{
-                          Get.to(() => const MenuTimDistribusi());
-                        }
-                      }, title: "Tim Distributor", urlImage: 'assets/images/group.png', color: const Color.fromARGB(255, 111, 16, 114), orientation: orientation),
-                    ),
-                    menuItem(size, onTap: (){}, title: "Donatur", color: const Color.fromARGB(255, 16, 114, 30), urlImage: 'assets/images/team.png', orientation: orientation, isCommingSoon: true),
-                    menuItem(size, onTap: (){}, title: "Riwayat", color: const Color.fromARGB(255, 135, 127, 11), urlImage: 'assets/images/history.png', orientation: orientation, isCommingSoon: true),
-                    menuItem(size, onTap: (){
-                      Get.to(() => const NotificationPages());
-                    }, title: "Notifikasi", color: const Color.fromARGB(255, 14, 149, 140), urlImage: 'assets/images/notification.png', orientation: orientation),
-                  ]
-                ),
-              ),
-                  
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: orientation == Orientation.landscape ? MainAxisAlignment.center : MainAxisAlignment.start,
-                  children: const [
-                    Text("Pintasan", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                  ],
-                ),
-              ),
-                  
-              Container(
-                padding: const EdgeInsets.all(20),
-                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                width: orientation == Orientation.landscape ? size.width / 2 : size.width,
-                decoration: BoxDecoration(
-                  color: const Color.fromRGBO(96, 81, 196, 1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.black12),
-                  boxShadow: const [
-                    BoxShadow(color: Colors.black38, blurRadius: 8, offset: Offset(1, 2))
-                  ],
-                  gradient: const LinearGradient(colors: [
-                    Color.fromRGBO(81, 196, 146, 1),
-                    Color.fromARGB(255, 101, 133, 55),
-                    Color.fromARGB(255, 87, 81, 36),
-                  ])
-                ),
-                child: Obx(() => trackingController.isLoading.value ? const Center(child: CupertinoActivityIndicator(color: Colors.white)) : Wrap(
-                    alignment: WrapAlignment.spaceAround,
-                    crossAxisAlignment: WrapCrossAlignment.start,
-                    children: [
-                      Obx(() => itemShortcut(
-                        onPressed: locationController.isLoading.value ? null : () async {
-                          if(locationController.myLocationV2.value == ""){
-                            final permissionLocation = await Permission.location.status;
-                            Get.snackbar("Gagal", "Gagal mendapatkan lokasi anda", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
-                            if(permissionLocation.isDenied || permissionLocation.isPermanentlyDenied){
-                              openAppSettings();
-                            }
-                          }else{
-                            Get.to(() => const TambahDonaturPage());
-                          }
-                        },
-                        name: "Tambah\nDonatur", 
-                        urlImage: 'assets/images/plus_blue.png')
-                      ),
-                      Obx(() => itemShortcut(
-                        onPressed: trackingController.wasSelfieAsFirst.value ? (){
-                          Get.to(() => const DaftarLokasiTagihanv2());
-                        } : (){
-                          Get.snackbar("Gagal", "Anda sudah melakukan cek keberangkatan untuk hari ini", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
-                        }, 
-                        name: "H Donatur", 
-                        urlImage: 'assets/images/h.png'),
-                      ),
-                      Obx(() => itemShortcut(
-                        onPressed: trackingController.wasSelfieAsFirst.value ? (){
-                          Get.to(() => const DaftarLokasiTagihanv3(isReminder: true));
-                        } : (){
-                          Get.snackbar("Gagal", "Anda sudah melakukan cek keberangkatan untuk hari ini", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
-                        },  
-                        name: "Reminder", 
-                        urlImage: 'assets/images/reminder.png')
-                      ),
-                      Obx(() => itemShortcut(onPressed: trackingController.wasSelfieAsFirst.value ? (){
-                          Get.snackbar("Gagal", "Anda sudah melakukan cek keberangkatan untuk hari ini", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
-                        } : (){
-                          Get.to(() => const CekKeberangkatan());
-                        }, name: "Mulai\nBerangkat", urlImage: 'assets/images/go.png'),
-                      ),
-                      Obx(() => itemShortcut(onPressed: trackingController.wasSelfieAsFirst.value ? (){
-                          Get.to(() => const CekKeberangkatan(isGoBack: true));
-                        } : (){
-                          Get.snackbar("Gagal", "Anda sudah melakukan cek keberangkatan untuk hari ini", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
-                        }, name: "Selesai", urlImage: 'assets/images/done.png'),
-                      ),
-                      itemShortcut(onPressed: (){
-                        Get.to(() => const DaftarDonaturView());
-                      }, name: "Tambah\nJadwal", urlImage: 'assets/images/add_jadwal.png'),
-                    ],
                   ),
-                ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisAlignment: orientation == Orientation.landscape ? MainAxisAlignment.center :MainAxisAlignment.start,
+                      children: const [
+                        Text("Semua Menu", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      ],
+                    ),
+                  ),
+                      
+                  SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: orientation == Orientation.landscape ? EdgeInsets.symmetric(horizontal: size.width / 6) : null,
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        Obx(() => menuItem(size, onTap: locationController.isLoading.value ? null : () async {
+                            if(locationController.myLocationV2.value == ""){
+                              final permissionLocation = await Permission.location.status;
+                              Get.snackbar("Gagal", "Gagal mendapatkan lokasi anda", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
+                              if(permissionLocation.isDenied || permissionLocation.isPermanentlyDenied){
+                                openAppSettings();
+                              }
+                            }else{
+                              Get.to(() => const MenuTimDistribusi());
+                            }
+                          }, title: "Tim Distributor", urlImage: 'assets/images/group.png', color: const Color.fromARGB(255, 111, 16, 114), orientation: orientation),
+                        ),
+                        menuItem(size, onTap: (){}, title: "Donatur", color: const Color.fromARGB(255, 16, 114, 30), urlImage: 'assets/images/team.png', orientation: orientation, isCommingSoon: true),
+                        menuItem(size, onTap: (){}, title: "Riwayat", color: const Color.fromARGB(255, 135, 127, 11), urlImage: 'assets/images/history.png', orientation: orientation, isCommingSoon: true),
+                        menuItem(size, onTap: (){
+                          Get.to(() => const NotificationPages());
+                        }, title: "Notifikasi", color: const Color.fromARGB(255, 14, 149, 140), urlImage: 'assets/images/notification.png', orientation: orientation),
+                      ]
+                    ),
+                  ),
+                      
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisAlignment: orientation == Orientation.landscape ? MainAxisAlignment.center : MainAxisAlignment.start,
+                      children: const [
+                        Text("Pintasan", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      ],
+                    ),
+                  ),
+                      
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                    width: orientation == Orientation.landscape ? size.width / 2 : size.width,
+                    decoration: BoxDecoration(
+                      color: const Color.fromRGBO(96, 81, 196, 1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.black12),
+                      boxShadow: const [
+                        BoxShadow(color: Colors.black38, blurRadius: 8, offset: Offset(1, 2))
+                      ],
+                      gradient: const LinearGradient(colors: [
+                        Color.fromRGBO(81, 196, 146, 1),
+                        Color.fromARGB(255, 101, 133, 55),
+                        Color.fromARGB(255, 87, 81, 36),
+                      ])
+                    ),
+                    child: Obx(() => trackingController.isLoading.value ? const Center(child: CupertinoActivityIndicator(color: Colors.white)) : Wrap(
+                        alignment: WrapAlignment.spaceAround,
+                        crossAxisAlignment: WrapCrossAlignment.start,
+                        children: [
+                          Obx(() => itemShortcut(
+                            onPressed: locationController.isLoading.value ? null : () async {
+                              if(locationController.myLocationV2.value == ""){
+                                final permissionLocation = await Permission.location.status;
+                                Get.snackbar("Gagal", "Gagal mendapatkan lokasi anda", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
+                                if(permissionLocation.isDenied || permissionLocation.isPermanentlyDenied){
+                                  openAppSettings();
+                                }
+                              }else{
+                                Get.to(() => const TambahDonaturPage());
+                              }
+                            },
+                            name: "Tambah\nDonatur", 
+                            urlImage: 'assets/images/plus_blue.png')
+                          ),
+                          Obx(() => itemShortcut(
+                            onPressed: trackingController.wasSelfieAsFirst.value ? (){
+                              Get.to(() => const DaftarLokasiTagihanv2());
+                            } : (){
+                              Get.snackbar("Gagal", "Anda sudah melakukan cek keberangkatan untuk hari ini", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
+                            }, 
+                            name: "H Donatur", 
+                            urlImage: 'assets/images/h.png'),
+                          ),
+                          itemShortcut(
+                            onPressed: (){Get.to(() => const DaftarLokasiTagihanv3(isReminder: true));},
+                            name: "Reminder", 
+                            urlImage: 'assets/images/reminder.png'),
+                          Obx(() => itemShortcut(onPressed: trackingController.wasSelfieAsFirst.value ? (){
+                              Get.snackbar("Gagal", "Anda sudah melakukan cek keberangkatan untuk hari ini", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
+                            } : (){
+                              Get.to(() => const CekKeberangkatan());
+                            }, name: "Mulai\nBerangkat", urlImage: 'assets/images/go.png'),
+                          ),
+                          Obx(() => itemShortcut(onPressed: trackingController.wasSelfieAsFirst.value ? (){
+                              Get.to(() => const CekKeberangkatan(isGoBack: true));
+                            } : (){
+                              Get.snackbar("Gagal", "Anda sudah melakukan cek keberangkatan untuk hari ini", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
+                            }, name: "Selesai", urlImage: 'assets/images/done.png'),
+                          ),
+                          itemShortcut(onPressed: (){
+                            Get.to(() => const DaftarDonaturView());
+                          }, name: "Tambah\nJadwal", urlImage: 'assets/images/add_jadwal.png'),
+                          itemShortcut(onPressed: (){
+                            Get.to(() => const GenerateKwitansiPage());
+                          }, name: "Kuitansi", urlImage: 'assets/images/payment.png'),
+                        ],
+                      ),
+                    ),
+                  ),
+                      
+                  const Text("App Version"),
+                  Obx(() => Text(appVersion.value)),
+                  const SizedBox(height: 100)
+                ],
               ),
-                  
-              const Text("App Version"),
-              Obx(() => Text(appVersion.value)),
-              const SizedBox(height: 100)
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -704,6 +709,7 @@ class _DaftarDonaturViewState extends State<DaftarDonaturView> {
   RxInt selectedIndex = 0.obs;
   RxString query = "".obs;
   TrackingController trackingController = Get.put(TrackingController());
+  RxBool startAnimation = false.obs;
 
   // RxList temporaryData = [].obs;
   RxList searchResult = [].obs;
@@ -716,8 +722,12 @@ class _DaftarDonaturViewState extends State<DaftarDonaturView> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 1), (){
-      trackingController.getDaftarJadwal();
+    Future.delayed(Duration.zero, (){
+      trackingController.getDaftarJadwal().then((bool result){
+        if(result){
+          startAnimation(true);
+        }
+      });
     });
   }
 
@@ -804,17 +814,29 @@ class _DaftarDonaturViewState extends State<DaftarDonaturView> {
                         ],
                       )
                     )
-                  ] : List.generate(trackingController.listJadwalDonatur.value!.data.length, (i) => itemCardDonatur(
-                    onPressed: (){
-                      dateTimePickerWidget(context, i);
-                    },
-                    kode: trackingController.listJadwalDonatur.value?.data[i].kode,
-                    name: trackingController.listJadwalDonatur.value?.data[i].nama,
-                    status: trackingController.listJadwalDonatur.value?.data[i].status,
-                    hari: trackingController.listJadwalDonatur.value?.data[i].hari,
-                    jam: trackingController.listJadwalDonatur.value?.data[i].jam,
-                    statusStr: trackingController.listJadwalDonatur.value?.data[i].statusStr
-                  )),
+                  ] : [
+                        Obx(() => ListView.builder(
+                            shrinkWrap: true,
+                            primary: false,
+                            itemCount: trackingController.listJadwalDonatur.value!.data.length,
+                            itemBuilder: (context, i) {
+                              return itemCardDonatur(
+                                index: i,
+                                size: size,
+                                onPressed: (){
+                                  dateTimePickerWidget(context, i);
+                                },
+                                kode: trackingController.listJadwalDonatur.value?.data[i].kode,
+                                name: trackingController.listJadwalDonatur.value?.data[i].nama,
+                                status: trackingController.listJadwalDonatur.value?.data[i].status,
+                                hari: trackingController.listJadwalDonatur.value?.data[i].hari,
+                                jam: trackingController.listJadwalDonatur.value?.data[i].jam,
+                                statusStr: trackingController.listJadwalDonatur.value?.data[i].statusStr
+                              );
+                            },
+                          ),
+                        )
+                      ],
                     ),
                   ),
                 ),
@@ -866,7 +888,7 @@ class _DaftarDonaturViewState extends State<DaftarDonaturView> {
             trackingController.getDaftarJadwal().then((done) => Get.back());
           }else{
             Get.back();
-            Get.snackbar("Berhasil", trackingController.responseMessage.value, backgroundColor: Colors.red, colorText: Colors.white);
+            Get.snackbar("Gagal", trackingController.responseMessage.value, backgroundColor: Colors.red, colorText: Colors.white);
           }
         });
       },
@@ -900,67 +922,71 @@ class _DaftarDonaturViewState extends State<DaftarDonaturView> {
     );
   }
 
-  CupertinoButton itemCardDonatur({Function()? onPressed, String? name, String? status, String? kode, String? jam, String? hari, String? statusStr}){
+  CupertinoButton itemCardDonatur({Function()? onPressed, String? name, String? status, String? kode, String? jam, String? hari, String? statusStr, Size? size, int? index}){
     return CupertinoButton(
       onPressed: onPressed,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-      child: Container(
-        padding: const EdgeInsets.all(13),
-        decoration: BoxDecoration(
-          color: const Color.fromRGBO(96, 81, 196, 1),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.black12),
-          boxShadow: const [
-            BoxShadow(color: Colors.black38, blurRadius: 8, offset: Offset(1, 2))
-          ],
-          gradient: LinearGradient(
-            colors: hari != null || jam != null ? const [
-              Color.fromRGBO(81, 196, 127, 1),
-              Color.fromARGB(255, 55, 133, 107),
-            ] : const [
-              Color.fromRGBO(96, 81, 196, 1),
-              Color.fromARGB(255, 65, 55, 133),
-            ]
-          )
-        ),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(child: Text(name ?? "Tidak ada nama", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white), maxLines: 2)),
-                Text(kode ?? "ASB0000", style: const TextStyle(fontSize: 14, color: Colors.white60), maxLines: 1),
-              ],  
-            ),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                const Icon(Clarity.clock_line, color: Colors.white60, size: 18),
-                const SizedBox(width: 5),
-                Text(hari ?? "Hari Kosong", style: const TextStyle(fontSize: 14, color: Colors.white60), maxLines: 1),
-                const SizedBox(width: 5),
-                const Text("-", style: TextStyle(fontSize: 14, color: Colors.white60)),
-                const SizedBox(width: 5),
-                Text("Pukul ${jam ?? '00:00 AM/PM'}", style: const TextStyle(fontSize: 14, color: Colors.white60), maxLines: 1)
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                if(status == "1")
-                  const Icon(Icons.circle, size: 14, color: Colors.green)
-                else if(status == "2" || status == "3")
-                  const Icon(Icons.circle, size: 14, color: Colors.yellow)
-                else if(status == "5")
-                  const Icon(Icons.circle, size: 14, color: Colors.blue)
-                else
-                  const Icon(Icons.circle, size: 14, color: Colors.red),
-                const SizedBox(width: 5),
-                Text(statusStr ?? "Status 404", style: const TextStyle(fontSize: 14, color: Colors.white60))
-              ],
+      child: Obx(() => AnimatedContainer(
+          duration: Duration(milliseconds: 400 + (index! * 100)),
+          transform: Matrix4.translationValues(startAnimation.value ? 0 : size!.width, 0, 0),
+          curve: Curves.easeInOut,
+          padding: const EdgeInsets.all(13),
+          decoration: BoxDecoration(
+            color: const Color.fromRGBO(96, 81, 196, 1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.black12),
+            boxShadow: const [
+              BoxShadow(color: Colors.black38, blurRadius: 8, offset: Offset(1, 2))
+            ],
+            gradient: LinearGradient(
+              colors: hari != null || jam != null ? const [
+                Color.fromRGBO(81, 196, 127, 1),
+                Color.fromARGB(255, 55, 133, 107),
+              ] : const [
+                Color.fromRGBO(96, 81, 196, 1),
+                Color.fromARGB(255, 65, 55, 133),
+              ]
             )
-          ],
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(child: Text(name ?? "Tidak ada nama", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white), maxLines: 2)),
+                  Text(kode ?? "ASB0000", style: const TextStyle(fontSize: 14, color: Colors.white60), maxLines: 1),
+                ],  
+              ),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  const Icon(Clarity.clock_line, color: Colors.white60, size: 18),
+                  const SizedBox(width: 5),
+                  Text(hari ?? "Hari Kosong", style: const TextStyle(fontSize: 14, color: Colors.white60), maxLines: 1),
+                  const SizedBox(width: 5),
+                  const Text("-", style: TextStyle(fontSize: 14, color: Colors.white60)),
+                  const SizedBox(width: 5),
+                  Text("Pukul ${jam ?? '00:00 AM/PM'}", style: const TextStyle(fontSize: 14, color: Colors.white60), maxLines: 1)
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  if(status == "1")
+                    const Icon(Icons.circle, size: 14, color: Colors.green)
+                  else if(status == "2" || status == "3")
+                    const Icon(Icons.circle, size: 14, color: Colors.yellow)
+                  else if(status == "5")
+                    const Icon(Icons.circle, size: 14, color: Colors.blue)
+                  else
+                    const Icon(Icons.circle, size: 14, color: Colors.red),
+                  const SizedBox(width: 5),
+                  Text(statusStr ?? "Status 404", style: const TextStyle(fontSize: 14, color: Colors.white60))
+                ],
+              )
+            ],
+          ),
         ),
       ),
     );

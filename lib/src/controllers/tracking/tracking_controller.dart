@@ -15,6 +15,7 @@ import 'package:http_parser/http_parser.dart';
 class TrackingController extends GetxController {
   RxBool isLoading = false.obs;
   RxBool isLoadingUpdateTanggal = false.obs;
+  RxString kodeKeberangkatan = "".obs;
   RxString responseMessage = "".obs;
   RxBool wasSelfieAsFirst = false.obs;
   AuthController authController = Get.put(AuthController());
@@ -172,6 +173,7 @@ class TrackingController extends GetxController {
       if (response.statusCode == 200) {
         if(result['success']) {
           wasSelfieAsFirst(true);
+          kodeKeberangkatan(result['data']['code']);
           responseMessage.value = result['message'];
           return true;
         }
@@ -195,6 +197,41 @@ class TrackingController extends GetxController {
       request.fields.addAll({
         'user': authController.token.value,
         'desc': description ?? ""
+      });
+      if(urlImage1 == null || urlImage2 == null || urlImage3 == null){
+        return false;
+      }
+      request.files.add(await http.MultipartFile.fromPath('image1', urlImage1, contentType: MediaType('image', 'jpeg')));
+      request.files.add(await http.MultipartFile.fromPath('image2', urlImage2, contentType: MediaType('image', 'jpeg')));
+      request.files.add(await http.MultipartFile.fromPath('image3', urlImage3, contentType: MediaType('image', 'jpeg')));
+      request.headers.addAll({'x-api-key': GlobalVariable.apiKey});
+
+      http.StreamedResponse response = await request.send();
+      jsonDecode(await response.stream.bytesToString());
+      isLoading(false);
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      isLoading(false);
+      responseMessage.value = e.toString();
+      return false;
+    }
+  }
+
+  Future<bool> postDoneWorkForToday({String? urlImage1, String? urlImage2, String? urlImage3, String? description}) async {
+    try {
+      if(kodeKeberangkatan.value == ""){
+        checkingSelfFirst();
+      }
+      isLoading(true);
+      var request = http.MultipartRequest('POST', Uri.parse('${GlobalVariable.mainURL}/selesai'));
+      request.fields.addAll({
+        'user': authController.token.value,
+        'desc': description ?? "",
+        'kode_jalan': kodeKeberangkatan.value
       });
       if(urlImage1 == null || urlImage2 == null || urlImage3 == null){
         return false;
@@ -451,6 +488,9 @@ class TrackingController extends GetxController {
           'data': jsonEncode(perolehan)
         },
       );
+
+      print(jadwalID);
+      print(jsonEncode(perolehan));
       var result = jsonDecode(response.body);
       isLoading(false);
       if (response.statusCode == 200) {
@@ -603,7 +643,7 @@ class TrackingController extends GetxController {
         body: {
           'user': authController.token.value,
           'drute_id': donaturRuteID ?? '0',
-          'datetime': date ?? '2025-01-31 00:00:00'
+          'datetime': date ?? ''
         },
       );
       var result = jsonDecode(response.body);
