@@ -3,12 +3,14 @@ import 'package:asb_app/src/components/global/index.dart';
 import 'package:asb_app/src/views/auth/splashscreen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await FlutterDownloader.initialize(debug: false, ignoreSsl: false);
   runApp(const MyApp());
 }
 

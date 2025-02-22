@@ -1,5 +1,4 @@
 import 'package:asb_app/src/controllers/auth/auth_controller.dart';
-import 'package:asb_app/src/views/auth/introduction_screen.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';

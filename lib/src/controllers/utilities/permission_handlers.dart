@@ -9,9 +9,9 @@ import 'package:permission_handler/permission_handler.dart';
 Future permissionsHandler() async {  
   final permissionStatusStorage = await Permission.storage.status;
   if (permissionStatusStorage.isDenied) {
-      await Permission.storage.request();
+    await Permission.storage.request();
   } else if (permissionStatusStorage.isPermanentlyDenied) {
-      await openAppSettings();
+    await openAppSettings();
   } else {
     print(permissionStatusStorage);
   }

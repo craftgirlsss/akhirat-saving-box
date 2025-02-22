@@ -70,11 +70,11 @@ class TrackingController extends GetxController {
 
       var result = jsonDecode(response.body);
       isLoading(false);
-      // print("ini ruteID = $ruteID");
-      // print("ini userID = ${authController.token.value}");
-      // print("ini type = $type");
-      // print("ini tanggal = $tanggal");
-      // print(result);
+      print(type);
+      print(result);
+      print(tanggal);
+      print(ruteID);
+      print(authController.token.value);
       if (response.statusCode == 200) {
         if(result['success']) {
           listRuteTerbaru.value = ListRuteAfterAddedModels.fromJson(result);
@@ -370,8 +370,43 @@ class TrackingController extends GetxController {
         body: {
           'user': authController.token.value,
           'drute_id': donaturID,
-          'date': tanggal,
-          'time' : jam
+          'datetime': tanggal,
+        },
+      );
+      var result = jsonDecode(response.body);
+      print("Ini result ubahTanggalRapel => $result dengan donaturID => $donaturID dan userID => ${authController.token.value} dan tanggal => $tanggal");
+      isLoading(false);
+      if (response.statusCode == 200) {
+        if(result['success']) {
+          responseMessage.value = result['message'];
+          return true;
+        }
+        responseMessage.value = result['message'];
+        return false;
+      } else {
+        responseMessage.value = result['message'];
+        return false;
+      }
+    } catch (e) {
+      isLoading(false);
+      responseMessage.value = e.toString();
+      return false;
+    }
+  }
+
+  Future<bool> ubahTanggal({String? donaturID, String? tanggal, String? jam}) async {
+    print("Fungsi ubahTanggalRapel() dijalankan");
+    try {
+      isLoading(true);
+      http.Response response = await http.post(
+        Uri.tryParse("${GlobalVariable.mainURL}/master/jadwal/update_tanggal")!,
+        headers: {
+          'x-api-key': GlobalVariable.apiKey,
+        },
+        body: {
+          'user': authController.token.value,
+          'drute_id': donaturID,
+          'datetime': tanggal,
         },
       );
       var result = jsonDecode(response.body);

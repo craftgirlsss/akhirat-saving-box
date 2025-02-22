@@ -310,7 +310,6 @@ import 'package:asb_app/src/controllers/tracking/tracking_controller.dart';
 import 'package:asb_app/src/controllers/utilities/location_controller.dart';
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/cek_keberangkatan.dart';
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/daftar_lokasi_tagihan_v2.dart';
-import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/daftar_lokasi_tagihan_v3.dart';
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/generate_kwitansi_page.dart';
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/menu_tim_distribusi.dart';
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/tambah_page_donatur.dart';
@@ -543,7 +542,7 @@ class _TimeDistribusiState extends State<TimeDistribusi> {
                             urlImage: 'assets/images/h.png'),
                           ),
                           itemShortcut(
-                            onPressed: (){Get.to(() => const DaftarLokasiTagihanv3(isReminder: true));},
+                            onPressed: (){Get.to(() => const DaftarLokasiTagihanv2(isReminder: true));},
                             name: "Reminder", 
                             urlImage: 'assets/images/reminder.png'),
                           Obx(() => itemShortcut(onPressed: trackingController.wasSelfieAsFirst.value ? (){
@@ -820,18 +819,21 @@ class _DaftarDonaturViewState extends State<DaftarDonaturView> {
                             primary: false,
                             itemCount: trackingController.listJadwalDonatur.value!.data.length,
                             itemBuilder: (context, i) {
-                              return itemCardDonatur(
-                                index: i,
-                                size: size,
-                                onPressed: (){
-                                  dateTimePickerWidget(context, i);
-                                },
-                                kode: trackingController.listJadwalDonatur.value?.data[i].kode,
-                                name: trackingController.listJadwalDonatur.value?.data[i].nama,
-                                status: trackingController.listJadwalDonatur.value?.data[i].status,
-                                hari: trackingController.listJadwalDonatur.value?.data[i].hari,
-                                jam: trackingController.listJadwalDonatur.value?.data[i].jam,
-                                statusStr: trackingController.listJadwalDonatur.value?.data[i].statusStr
+                              return Obx(() =>  itemCardDonatur(
+                                  index: i,
+                                  size: size,
+                                  onPressed: trackingController.listJadwalDonatur.value?.data[i].status == "1" ? (){
+                                    dateTimePickerWidget(context, i);
+                                  } : (){
+                                    Get.snackbar("Gagal", "Donatur sudah ditambahkan ke jadwal pengambilan kaleng bulan ini", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
+                                  },
+                                  kode: trackingController.listJadwalDonatur.value?.data[i].kode,
+                                  name: trackingController.listJadwalDonatur.value?.data[i].nama,
+                                  status: trackingController.listJadwalDonatur.value?.data[i].status,
+                                  hari: trackingController.listJadwalDonatur.value?.data[i].hari,
+                                  jam: trackingController.listJadwalDonatur.value?.data[i].jam,
+                                  statusStr: trackingController.listJadwalDonatur.value?.data[i].statusStr
+                                ),
                               );
                             },
                           ),

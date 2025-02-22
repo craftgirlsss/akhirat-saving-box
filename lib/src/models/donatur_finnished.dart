@@ -70,6 +70,8 @@ class Datum {
     String nama;
     int jumlahDonasi;
     String namaProgram;
+    String? jadwalID;
+    String? terbilang;
     List<List<dynamic>> summary;
 
     Datum({
@@ -78,6 +80,8 @@ class Datum {
         required this.jumlahDonasi,
         required this.namaProgram,
         required this.summary,
+        this.jadwalID,
+        this.terbilang
     });
 
     factory Datum.fromJson(Map<String, dynamic> json) => Datum(
@@ -85,6 +89,8 @@ class Datum {
         nama: json["nama"],
         jumlahDonasi: json["jumlah_donasi"],
         namaProgram: json["nama_program"],
+        jadwalID: json['jadwal'],
+        terbilang: json['terbilang'],
         summary: List<List<dynamic>>.from(json["summary"].map((x) => List<dynamic>.from(x.map((x) => x)))),
     );
 
@@ -93,6 +99,8 @@ class Datum {
         "nama": nama,
         "jumlah_donasi": jumlahDonasi,
         "nama_program": namaProgram,
+        "terbilang" : terbilang,
+        "jadwal" : jadwalID,
         "summary": List<dynamic>.from(summary.map((x) => List<dynamic>.from(x.map((x) => x)))),
     };
 }

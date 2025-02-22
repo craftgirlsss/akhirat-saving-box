@@ -1,13 +1,22 @@
+import 'dart:io';
+
 import 'package:asb_app/src/components/global/index.dart';
 import 'package:asb_app/src/components/textformfield/rounded_rectangle_text_field.dart';
 import 'package:asb_app/src/controllers/utilities/cupertino_dialogs.dart';
 import 'package:asb_app/src/controllers/wilayah/wilayah_controller.dart';
 import 'package:asb_app/src/helpers/currency_formator.dart';
+import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/pdf_viewer_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_cached_pdfview/flutter_cached_pdfview.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:get/get.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:intl/intl.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class GenerateKwitansiPage extends StatefulWidget {
   const GenerateKwitansiPage({super.key, this.fromTableView, this.jadwalID});
@@ -29,6 +38,10 @@ class _GenerateKwitansiPageState extends State<GenerateKwitansiPage> {
   WilayahController wilayahController = Get.put(WilayahController());
   final _formKey = GlobalKey<FormState>();
 
+  RxString jadwalIDForShortcut = "".obs;
+  
+  RxBool showPDFPreview = false.obs;
+
   RxBool showTablePerolehan = false.obs;
 
   RxString selectedDate = ''.obs;
@@ -45,6 +58,7 @@ class _GenerateKwitansiPageState extends State<GenerateKwitansiPage> {
   String dateFormattedYearAndMonthV2({DateTime? time}){
     return DateFormat('yyyy-MM').format(time ?? now);
   }
+  
 
   @override
   void initState() {
@@ -52,12 +66,16 @@ class _GenerateKwitansiPageState extends State<GenerateKwitansiPage> {
     selectedDate(dateFormattedYearAndMonthV2(time: now));
     Future.delayed(const Duration(seconds: 1), (){
       if(widget.fromTableView != null || widget.fromTableView == true){
+        jadwalIDForShortcut(widget.jadwalID);
         wilayahController.getDonaturFinnishedByJadwalID(jadwalID: widget.jadwalID).then((result) {
           if(result){
             showTablePerolehan(true);
             name.text = wilayahController.detailDonaturFinnish.value?.data.nama ?? "Unknown Name";
             program.text = wilayahController.detailDonaturFinnish.value?.data.namaProgram ?? "Unknown Program name";
             jumlah.text = formatCurrencyId.format(wilayahController.detailDonaturFinnish.value?.data.jumlahDonasi ?? 0);
+            // if(wilayahController.detailDonaturFinnish.value?.data. != ""){
+            //   jumlahDalamBahasa.text = wilayahController.detailDonaturFinnish.value?.data.namaP
+            // }
           }
         });
       }else{
@@ -99,6 +117,50 @@ class _GenerateKwitansiPageState extends State<GenerateKwitansiPage> {
             icon: const Icon(Iconsax.arrow_left_2_bold, size: 30)
           ),
           title: const Text("Buat Kuitansi"),
+          actions: [
+            widget.fromTableView == null || widget.fromTableView == false ? showPDFPreview.value ? Obx(() {
+              if(wilayahController.urlPDFGenerated.value != ""){
+                return CupertinoButton(
+                  onPressed: () async {
+                    if(await Permission.manageExternalStorage.isGranted){
+                      var dir = await getDownloadsDirectory();
+                      String? fileName = wilayahController.fileName.value;
+                      String? filePath = "/storage/emulated/0/Download/$fileName";
+                      bool? isAvailableFile = await File(filePath).exists();
+
+                      if(!isAvailableFile){
+                        if(dir != null){
+                          final taskID = await FlutterDownloader.enqueue(
+                            allowCellular: true,
+                            url: wilayahController.urlPDFGenerated.value,
+                            fileName: fileName,
+                            saveInPublicStorage: true,
+                            savedDir: "/storage/emulated/0/Download/",
+                            showNotification: true,
+                          );
+                          if(taskID != null){
+                            await OpenFile.open(filePath);
+                          }else{
+                            print("Donwload gagal");
+                          }
+                        }else{
+                          Get.snackbar("Gagal", "Gagal menemukan filepath");  
+                        }
+                      }else{
+                        Get.snackbar("Gagal", "Kwitansi sudah ada di folder Download", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
+                      }
+                    }else{
+                      await Permission.manageExternalStorage.request();
+                    }
+                  },
+                  child: Obx(() => wilayahController.isLoading.value ? const CupertinoActivityIndicator(color: GlobalVariable.secondaryColor) : const Text("Download File", style: TextStyle(color: GlobalVariable.secondaryColor))),
+                );
+              }else{
+                Get.snackbar("Gagal", "Gagal mendownload file karena URL tidak ditemukan", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
+              }
+              return Container();
+            }) : const SizedBox() : const SizedBox()
+          ],
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
@@ -106,7 +168,65 @@ class _GenerateKwitansiPageState extends State<GenerateKwitansiPage> {
             key: _formKey,
             child: Obx(() => Column(
                 children: [
-                  showTablePerolehan.value ? 
+                  widget.fromTableView == null || widget.fromTableView == false ? const SizedBox() : Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.black38, width: 0.5),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        widget.fromTableView == null || widget.fromTableView == false ? const Text('Pilih Tanggal: ') : const SizedBox(),
+                         widget.fromTableView == null || widget.fromTableView == false ? Obx(() => CupertinoButton(
+                            padding: EdgeInsets.zero,
+                            onPressed: wilayahController.isLoading.value || widget.fromTableView != null || widget.fromTableView == true ? null : () {
+                              customCupertinoDialogActionSheet(context,
+                                child: CupertinoDatePicker(
+                                  mode: CupertinoDatePickerMode.monthYear,
+                                  initialDateTime: now,
+                                  onDateTimeChanged: (value) {
+                                    selectedDate.value = dateFormattedYearAndMonthV2(time: value);
+                                    wilayahController.getDonaturFinnished(date: selectedDate.value).then((result) {
+                                      if(result){
+                                        namaList([]); // reset data di list temp
+                                        for(int i = 0; i < wilayahController.donaturFinnishedModels.value!.data.length; i++){
+                                          namaList.add(wilayahController.donaturFinnishedModels.value?.data[i].nama ?? "Unknown Name");
+                                        }
+                                        if(namaList.length < 1){
+                                          name.text = "";
+                                          jumlah.text = "";
+                                          program.text = "";
+                                          jumlahDalamBahasa.text = "";  
+                                        }else{
+                                          showTablePerolehan(true);
+                                          jadwalIDForShortcut(wilayahController.donaturFinnishedModels.value!.data[0].jadwalID);
+                                          name.text = wilayahController.donaturFinnishedModels.value!.data[0].nama;
+                                          jumlah.text = wilayahController.donaturFinnishedModels.value!.data[0].jumlahDonasi.toString();
+                                          program.text = wilayahController.donaturFinnishedModels.value!.data[0].namaProgram;
+                                          jumlahDalamBahasa.text = wilayahController.donaturFinnishedModels.value!.data[0].terbilang!;
+                                        }
+                                      }else{
+                                        namaList([]);
+                                        name.text = "";
+                                        jumlah.text = "";
+                                        program.text = "";
+                                        jumlahDalamBahasa.text = "";
+                                      }
+                                    });
+                                  },
+                                  maximumYear: now.year,
+                                  minimumYear: now.year - 10,
+                                )
+                              );
+                            },
+                            child: Obx(() => Text(selectedDate.value, style: const TextStyle(color: GlobalVariable.secondaryColor, fontWeight: FontWeight.bold, fontSize: 14))),
+                          ),
+                        ) : const SizedBox(),
+                      ],
+                    ),
+                  ),
+                  widget.fromTableView == null || widget.fromTableView == false ? showTablePerolehan.value ? 
                     widget.fromTableView == true ?
                       Column(
                         children: [
@@ -184,59 +304,10 @@ class _GenerateKwitansiPageState extends State<GenerateKwitansiPage> {
                           const Divider(height: 0.5),
                           const SizedBox(height: 10),
                         ],
-                      ) : const SizedBox() : const SizedBox(),
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 8),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.black38, width: 0.5),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        const Text('Pilih Tanggal: '),
-                        Obx(() => CupertinoButton(
-                            padding: EdgeInsets.zero,
-                            onPressed: wilayahController.isLoading.value || widget.fromTableView != null || widget.fromTableView == true ? null : () {
-                              customCupertinoDialogActionSheet(context,
-                                child: CupertinoDatePicker(
-                                  mode: CupertinoDatePickerMode.monthYear,
-                                  initialDateTime: now,
-                                  onDateTimeChanged: (value) {
-                                    selectedDate.value = dateFormattedYearAndMonthV2(time: value);
-                                    wilayahController.getDonaturFinnished(date: selectedDate.value).then((result) {
-                                      if(result){
-                                        namaList([]); // reset data di list temp
-                                        for(int i = 0; i < wilayahController.donaturFinnishedModels.value!.data.length; i++){
-                                          namaList.add(wilayahController.donaturFinnishedModels.value?.data[i].nama ?? "Unknown Name");
-                                        }
-                                        if(namaList.length < 1){
-                                          name.text = "";
-                                          jumlah.text = "";
-                                          program.text = "";
-                                          jumlahDalamBahasa.text = "";  
-                                        }
-                                      }else{
-                                        namaList([]);
-                                        name.text = "";
-                                        jumlah.text = "";
-                                        program.text = "";
-                                        jumlahDalamBahasa.text = "";
-                                      }
-                                    });
-                                  },
-                                  maximumYear: now.year,
-                                  minimumYear: now.year - 10,
-                                )
-                              );
-                            },
-                            child: Obx(() => Text(selectedDate.value, style: const TextStyle(color: GlobalVariable.secondaryColor, fontWeight: FontWeight.bold, fontSize: 14))),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Obx(() => CustomRoundedTextField(controller: name, label: "Nama", errorText: "Mohon isikan nama", placeholder: wilayahController.isLoading.value ? "Mendapatkan Nama..." : "Pilih", readOnly: true, onTap: widget.fromTableView != null || widget.fromTableView == true ? null : (){
+                      ) : const SizedBox() : const SizedBox() : const SizedBox(),
+                  widget.fromTableView == null || widget.fromTableView == false 
+                  ? CustomRoundedTextField(controller: name, label: "Nama", placeholder: "Mohon inputkan nama", keyboardType: TextInputType.name, errorText: "Mohon inputkan nama",)
+                  : Obx(() => CustomRoundedTextField(controller: name, label: "Nama", errorText: "Mohon pilih nama", placeholder: wilayahController.isLoading.value ? "Mendapatkan Nama..." : "Pilih", readOnly: true, onTap: widget.fromTableView != null || widget.fromTableView == true ? null : (){
                       customCupertinoDialog(context, child: Obx(() => CupertinoPicker(
                           magnification: 1.22,
                           squeeze: 1.2,
@@ -247,6 +318,12 @@ class _GenerateKwitansiPageState extends State<GenerateKwitansiPage> {
                             selectedNama.value = selectedItem;
                             name.text = namaList[selectedNama.value];
                             showTablePerolehan(true);
+                            if(wilayahController.donaturFinnishedModels.value?.data[selectedNama.value].terbilang != ""){
+                              jumlahDalamBahasa.text = wilayahController.donaturFinnishedModels.value!.data[selectedNama.value].terbilang!;
+                            }else{
+                              jumlahDalamBahasa.text = "";
+                            }
+                            jadwalIDForShortcut(wilayahController.donaturFinnishedModels.value?.data[selectedNama.value].jadwalID);
                             jumlah.text = wilayahController.donaturFinnishedModels.value?.data[selectedNama.value].jumlahDonasi != null ? formatCurrencyId.format(wilayahController.donaturFinnishedModels.value!.data[selectedNama.value].jumlahDonasi) : "0";
                             program.text = wilayahController.donaturFinnishedModels.value?.data[selectedNama.value].namaProgram != null ? wilayahController.donaturFinnishedModels.value!.data[selectedNama.value].namaProgram : "Unknown Program";
                           },
@@ -257,23 +334,22 @@ class _GenerateKwitansiPageState extends State<GenerateKwitansiPage> {
                       ));
                     }),
                   ),
-                  CustomRoundedTextField(controller: jumlah, label: "Jumlah", placeholder: "Inputkan jumlah", keyboardType: TextInputType.number, readOnly: true, errorText: "Mohon isikan jumlah",),
-                  CustomRoundedTextField(controller: jumlahDalamBahasa, label: "Jumlah dalam kalimat bahasa indonesia", placeholder: "Inputkan jumlah", keyboardType: TextInputType.name, errorText: "Mohon isikan jumlah dalam bahasa indonesia"),
-                  CustomRoundedTextField(controller: program, label: "Program", placeholder: "Pilih Donatur", readOnly: true, onTap: (){}, errorText: "Mohon isikan program"),
-                  Row(
-                    children: [
-                      Obx(() => CupertinoCheckbox(
-                          activeColor: GlobalVariable.secondaryColor,
-                          shape: const CircleBorder(),
-                          value: sendToDonatur.value, 
-                          onChanged: (value){
-                            sendToDonatur.value = !sendToDonatur.value;
-                          }
-                        ),
-                      ),
-                      const Text("Kirim ke donatur", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black38))
-                    ],
-                  )
+                  CustomRoundedTextField(controller: jumlah, label: "Jumlah", placeholder: "Inputkan jumlah", keyboardType: TextInputType.number, readOnly: widget.fromTableView == null || widget.fromTableView == false ? false : true, errorText: "Mohon isikan jumlah",),
+                  // CustomRoundedTextField(controller: jumlahDalamBahasa, label: "Jumlah dalam kalimat bahasa indonesia", placeholder: "Inputkan jumlah", keyboardType: TextInputType.name, errorText: "Mohon isikan jumlah dalam bahasa indonesia"),
+                  CustomRoundedTextField(controller: program, label: "Program", placeholder: "Mohon inputkan nama program", readOnly: widget.fromTableView == null || widget.fromTableView == false ? false : true, errorText: "Mohon isikan program", keyboardType: TextInputType.name),
+                  
+                  //Preview PDF Manual after post to API
+                  widget.fromTableView == null || widget.fromTableView == false 
+                    ? Obx(() {
+                      if(showPDFPreview.value){
+                        return SizedBox(
+                          width: size.width,
+                          height: size.height / 3,
+                          child: const PDF().cachedFromUrl(wilayahController.urlPDFGenerated.value));
+                      }
+                      return const SizedBox();
+                    })
+                    : const SizedBox()
                 ],
               ),
             ),
@@ -281,17 +357,78 @@ class _GenerateKwitansiPageState extends State<GenerateKwitansiPage> {
         ),
         bottomNavigationBar: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          child: Obx(() => ElevatedButton(
+          child: Obx(() => 
+            ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: GlobalVariable.secondaryColor,
                 elevation: 0,
               ),
-              onPressed: wilayahController.isLoading.value || namaList.length < 1 ? null : (){
+              onPressed: wilayahController.isLoading.value || namaList.length < 1 ? null : () async {
+                var status = await Permission.storage.status;
+                if(status != PermissionStatus.granted){
+                  await Permission.storage.request();
+                }else if (status == PermissionStatus.permanentlyDenied) {
+                  openAppSettings();
+                }else{
+                  print(status);
+                }
                 if(_formKey.currentState!.validate()){
-                  print("Form validated");
+                  if(widget.fromTableView == null || widget.fromTableView == false){
+                    if(await wilayahController.generateKwitansiManual(
+                      name: name.text,
+                      jumlah: jumlah.text,
+                      program: program.text
+                    )){
+                      showPDFPreview(true);
+                    }else{
+                      showPDFPreview(false);
+                    }
+                  }else{
+                    if(await wilayahController.generateKwitansi(
+                      terbilang: jumlahDalamBahasa.text,
+                      jadwalID: jadwalIDForShortcut.value
+                    )){
+                      if(wilayahController.urlPDFGenerated.value != ""){
+                        if(await Permission.manageExternalStorage.isGranted){
+                          var dir = await getDownloadsDirectory();
+                          String? fileName = wilayahController.fileName.value;
+                          String? filePath = "/storage/emulated/0/Download/$fileName";
+                          bool? isAvailableFile = await File(filePath).exists();
+
+                          if(!isAvailableFile){
+                            if(dir != null){
+                              final taskID = await FlutterDownloader.enqueue(
+                                allowCellular: true,
+                                url: wilayahController.urlPDFGenerated.value,
+                                fileName: fileName,
+                                saveInPublicStorage: true,
+                                savedDir: "/storage/emulated/0/Download/",
+                                showNotification: true,
+                              );
+                              if(taskID != null){
+                                await OpenFile.open(filePath);
+                              }else{
+                                print("Donwload gagal");
+                              }
+                            }else{
+                              Get.snackbar("Gagal", "Gagal menemukan filepath");  
+                            }
+                          }else{
+                            Get.snackbar("Gagal", "Kwitansi sudah ada di folder Download", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
+                          }
+                        }else{
+                          await Permission.manageExternalStorage.request();
+                        }
+                      }else{
+                        Get.snackbar("Gagal", "URL PDF tidak ditemukan", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
+                      }
+                    }else{
+                      Get.snackbar("Gagal", wilayahController.responseString.value, backgroundColor: Colors.red, colorText: Colors.white);
+                    }
+                  }
                 }
               },
-              child: Obx(() => wilayahController.isLoading.value ? const SizedBox(width: 30, height: 30, child: CircularProgressIndicator(color: Colors.black38)) : const Text("Buat Kuitansi", style: TextStyle(color: Colors.white, fontSize: 15)))
+              child: Obx(() => wilayahController.isLoading.value ? const SizedBox(width: 30, height: 30, child: CircularProgressIndicator(color: Colors.black38)) : Text(widget.fromTableView == null || widget.fromTableView == false ? "Lihat Preview Kwitansi" : "Buat Kuitansi", style: const TextStyle(color: Colors.white, fontSize: 15)))
             ),
           ),
         ),

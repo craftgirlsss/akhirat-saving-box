@@ -17,6 +17,8 @@ import 'package:http/http.dart' as http;
 class WilayahController extends GetxController{
   RxBool isLoading = false.obs;
   RxString responseString = "".obs;
+  RxString urlPDFGenerated = "".obs;
+  RxString fileName = "".obs;
   RxList<RxMap<String, dynamic>> daftarWilayah = RxList<RxMap<String, dynamic>>();
   AuthController authController = Get.put(AuthController());
   Rxn<WilayahModels> wilayahModels = Rxn<WilayahModels>();
@@ -235,6 +237,88 @@ class WilayahController extends GetxController{
         return false;
       }
     } catch (e) {
+      isLoading(false);
+      responseString.value = e.toString();
+      return false;
+    }
+  }
+
+  // generate Kwitansi
+  Future<bool> generateKwitansi({String? jadwalID, String? terbilang}) async {
+    try {
+      isLoading(true);
+      http.Response response = await http.post(
+        Uri.tryParse("${GlobalVariable.mainURL}/master/kuitansi/create")!,
+        headers: {
+          'x-api-key': GlobalVariable.apiKey,
+        },
+        body: {
+          'user': authController.token.value,
+          'jadwal': jadwalID,
+          'terbilang': terbilang
+        },
+      );
+      var result = jsonDecode(response.body);
+      print(result);
+      isLoading(false);
+      if (response.statusCode == 200) {
+        if(result['success']) {
+          responseString.value = result['message'];
+          urlPDFGenerated.value = result['data']['url'];
+          print("ini URLPDFGenerated => ${urlPDFGenerated.value}");
+          fileName(result['data']['filename']);
+          return true;
+        }
+        responseString.value = result['message'];
+        return false;
+      } else {
+        responseString.value = result['message'];
+        return false;
+      }
+    } catch (e) {
+      print("Masuk ke e karena $e");
+      isLoading(false);
+      responseString.value = e.toString();
+      return false;
+    }
+  }
+
+
+  // generate Kwitansi Manual
+  Future<bool> generateKwitansiManual({String? name, String? program, String? jumlah}) async {
+    try {
+      isLoading(true);
+      http.Response response = await http.post(
+        Uri.tryParse("${GlobalVariable.mainURL}/master/kuitansi/custom")!,
+        headers: {
+          'x-api-key': GlobalVariable.apiKey,
+        },
+        body: {
+          'user': authController.token.value,
+          'donatur': name,
+          'program': program,
+          'jumlah': jumlah
+        },
+      );
+      var result = jsonDecode(response.body);
+      print(result);
+      isLoading(false);
+      if (response.statusCode == 200) {
+        if(result['success']) {
+          responseString.value = result['message'];
+          urlPDFGenerated.value = result['data']['url'];
+          print("ini URLPDFGenerated => ${urlPDFGenerated.value}");
+          fileName(result['data']['filename']);
+          return true;
+        }
+        responseString.value = result['message'];
+        return false;
+      } else {
+        responseString.value = result['message'];
+        return false;
+      }
+    } catch (e) {
+      print("Masuk ke e karena $e");
       isLoading(false);
       responseString.value = e.toString();
       return false;

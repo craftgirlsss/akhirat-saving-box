@@ -9,6 +9,7 @@ import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/detail_lokasi.
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/generate_kwitansi_page.dart';
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/image_viewer.dart';
 import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/persiapan_berangkat.dart';
+import 'package:day_night_time_picker/day_night_time_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -81,6 +82,32 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
   TextEditingController latitude = TextEditingController();
   TextEditingController longitude = TextEditingController();
   TextEditingController keteranganEdit = TextEditingController();
+
+  Time _time = Time(hour: 11, minute: 30, second: 20);
+  bool iosStyle = true;
+
+  void onTimeChanged(Time newTime) {
+    setState(() {
+      _time = newTime;
+    });
+  }
+
+
+  // Fungsi picker edit date
+  DateTime? selectedDateEdited;
+  Future<void> _selectDate() async {
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: now,
+      firstDate: now,
+      lastDate: DateTime(now.year, now.month+1, now.day),
+    );
+
+    setState(() {
+      selectedDateEdited = pickedDate;
+    });
+  }
+  
 
   @override
   void initState() {
@@ -234,7 +261,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                           ),
                         ),
                     
-                        widget.isReminder == null || widget.isReminder == false ? Expanded(
+                        Expanded(
                           child: Container(
                             decoration: BoxDecoration(
                               border: Border.all(color: Colors.black38, width: 0.5),
@@ -266,7 +293,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                               ],
                             ),
                           ),
-                        ) : const SizedBox(),
+                        ),
                       ],
                     ),
               
@@ -289,12 +316,6 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                                     columnSpacing: 10,
                                     horizontalMargin: 10,
                                     headingRowColor: const WidgetStatePropertyAll(GlobalVariable.secondaryColor),
-                                    // border: const TableBorder(
-                                    //   left: BorderSide(color: Colors.black26),
-                                    //   right: BorderSide(color: Colors.black26),
-                                    //   bottom: BorderSide(color: Colors.black26),
-                                    //   top: BorderSide(color: Colors.black26),
-                                    // ),
                                     columns: List<DataColumn>.generate(listDataColumn.length, (i) => DataColumn(label: Text(listDataColumn[i], style: const TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: Colors.white, fontSize: 11)))),
                                     rows: List<DataRow>.generate(trackingController.listRuteTerbaru.value!.data!.length, (i){
                                       Color? colorRow;
@@ -385,72 +406,72 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                                           //Jam
                                           DataCell(Obx(() => GestureDetector(
                                             onTap: trackingController.isLoading.value ? null : () async {
-
-                                              /*
-                                              customCupertinoDialog(context,
-                                                child: CupertinoDatePicker(
-                                                  mode: CupertinoDatePickerMode.time,
-                                                  use24hFormat: true,
-                                                  initialDateTime: now,
-                                                  onDateTimeChanged: (value) {
-                                                    trackingController.listRuteTerbaru.value?.data?[i].jam = dateFormatTime(time: value);
+                                              Navigator.of(context).push(
+                                                showPicker(
+                                                  context: context,
+                                                  value: _time,
+                                                  sunrise: const TimeOfDay(hour: 6, minute: 0), // optional
+                                                  sunset: const TimeOfDay(hour: 18, minute: 0), // optional
+                                                  duskSpanInMinutes: 120, // optional
+                                                  onChange: onTimeChanged,
+                                                  onChangeDateTime: (DateTime p0) {
+                                                    trackingController.listRuteTerbaru.value?.data?[i].tanggalPengambilan = DateFormat("yyyy-MM-dd hh:mm:ss").format(p0);
+                                                    trackingController.listRuteTerbaru.value?.data?[i].jam = DateFormat("hh:mm:ss").format(p0);
+                                                    trackingController.ubahTanggalRapel(
+                                                      jam: trackingController.listRuteTerbaru.value?.data?[i].jam,
+                                                      donaturID: trackingController.listRuteTerbaru.value?.data?[i].id,
+                                                      tanggal: trackingController.listRuteTerbaru.value?.data?[i].tanggalPengambilan,
+                                                    ).then<Null>((bool value){
+                                                      trackingController.getRuteV2(tanggal: selectedDate.value, ruteID: wilayahID.value, type: selectedType.value).then((result){
+                                                        if(result){
+                                                          Get.snackbar("Berhasil", trackingController.responseMessage.value, backgroundColor: Colors.green, colorText: Colors.white);
+                                                          showDataTable(true);
+                                                        }else{
+                                                          Get.snackbar("Gagal", trackingController.responseMessage.value, backgroundColor: Colors.red, colorText: Colors.white);
+                                                          showDataTable(false);
+                                                        }
+                                                      });
+                                                    });
                                                   },
-                                                  maximumYear: now.year,
-                                                  minimumYear: now.year - 10,
-                                                )
+                                                ),
                                               );
-                                              await trackingController.ubahTanggalRapel(
-                                                jam: trackingController.listRuteTerbaru.value?.data?[i].jam,
-                                                donaturID: trackingController.listRuteTerbaru.value?.data?[i].id,
-                                                tanggal: trackingController.listRuteTerbaru.value?.data?[i].tanggalPengambilan,
-                                              ).then<Null>((bool value){
-                                                trackingController.getRuteV2(tanggal: selectedDate.value, ruteID: wilayahID.value, type: selectedType.value).then((result){
-                                                  if(result){
-                                                    Get.snackbar("Berhasil", trackingController.responseMessage.value, backgroundColor: Colors.green, colorText: Colors.white);
-                                                    showDataTable(true);
-                                                  }else{
-                                                    Get.snackbar("Gagal", trackingController.responseMessage.value, backgroundColor: Colors.red, colorText: Colors.white);
-                                                    showDataTable(false);
-                                                  }
-                                                });
-                                              });
-                                              */
                                             },
                                             child: Text(trackingController.listRuteTerbaru.value?.data?[i].jam ?? i.toString(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),)))),
                                           // Tanggal
                                           DataCell(Obx(() => GestureDetector(
-                                            onTap: trackingController.isLoading.value ? null : () async {},
+                                            onTap: trackingController.isLoading.value ? null : () async {
+                                              final DateTime? pickedDate = await showDatePicker(
+                                                context: context,
+                                                initialDate: now,
+                                                firstDate: now,
+                                                lastDate: DateTime(now.year, now.month+1, now.day),
+                                              );
+                                              if(pickedDate != null){
+                                                String? updatedFDate = DateFormat("yyyy-MM-dd").format(pickedDate);
+                                                trackingController.ubahTanggal(
+                                                  jam: trackingController.listRuteTerbaru.value?.data?[i].jam,
+                                                  donaturID: trackingController.listRuteTerbaru.value?.data?[i].id,
+                                                  tanggal: updatedFDate,
+                                                ).then<Null>((bool value){
+                                                  trackingController.getRuteV2(tanggal: selectedDate.value, ruteID: wilayahID.value, type: selectedType.value).then((result){
+                                                    if(result){
+                                                      Get.snackbar("Berhasil", trackingController.responseMessage.value, backgroundColor: Colors.green, colorText: Colors.white);
+                                                      showDataTable(true);
+                                                    }else{
+                                                      Get.snackbar("Gagal", trackingController.responseMessage.value, backgroundColor: Colors.red, colorText: Colors.white);
+                                                      showDataTable(false);
+                                                    }
+                                                  });
+                                                });
+                                              }
+                                            },
                                             child: Text(DateFormat('EEEE').format(DateTime.parse(trackingController.listRuteTerbaru.value!.data![i].tanggalPengambilan!)), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold))
                                             ),
                                           )),
                                                   
                                           //Hari
                                           DataCell(Obx(() => GestureDetector(
-                                            onTap: trackingController.isLoading.value ? null : () async {
-                                              /*
-                                              customCupertinoDialog(context,
-                                                child: CupertinoDatePicker(
-                                                  mode: CupertinoDatePickerMode.date,
-                                                  use24hFormat: true,
-                                                  initialDateTime: now,
-                                                  onDateTimeChanged: (value) {
-                                                    setState(() {
-                                                      trackingController.listRuteTerbaru.value?.data?[i].tanggalPengambilan = dateFormatted(time: value);
-                                                    });
-                                                  },
-                                                  maximumYear: now.year,
-                                                  minimumYear: now.year - 10,
-                                                )
-                                              );
-                                              await trackingController.ubahTanggalRapel(
-                                                jam: trackingController.listRuteTerbaru.value?.data?[i].jam,
-                                                donaturID: trackingController.listRuteTerbaru.value?.data?[i].id,
-                                                tanggal: trackingController.listRuteTerbaru.value?.data?[i].tanggalPengambilan,
-                                              ).then((value){
-                                                trackingController.getRuteV2(tanggal: selectedDate.value, ruteID: wilayahController.wilayahModels.value?.data[selectedRuteIndex.value].id, type: selectedType.value).then((result){});
-                                              });
-                                              */
-                                            },
+                                            onTap: trackingController.isLoading.value ? null : () async {},
                                             child: Text(trackingController.listRuteTerbaru.value?.data?[i].tanggalPengambilan ?? i.toString(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),)))),
                 
                                           // INI AWAL
