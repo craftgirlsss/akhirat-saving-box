@@ -13,6 +13,7 @@ class DonaturDetailController extends GetxController {
   
   var isSendingNotif = false.obs;
   var isUpdatingJadwal = false.obs;
+  var kodeJadwal = "".obs;
 
   // States untuk Jadwal
   var selectedDate = Rxn<DateTime>();
@@ -56,9 +57,7 @@ class DonaturDetailController extends GetxController {
         parsedDate = dt;
         
         // Jika Prioritas 1 gagal, gunakan waktu dari DateTime (Prioritas 2)
-        if (parsedTime == null) {
-          parsedTime = TimeOfDay.fromDateTime(dt);
-        }
+        parsedTime ??= TimeOfDay.fromDateTime(dt);
       } catch (_) {
         // Abaikan jika format tanggal salah
       }
@@ -79,15 +78,12 @@ class DonaturDetailController extends GetxController {
 
     if (updatedDonatur != null) {
       donatur.value = updatedDonatur;
-      Get.snackbar('Data Diperbarui', 'Status notifikasi telah di-refresh.', 
-                   backgroundColor: Colors.lightBlue, colorText: Colors.white, duration: const Duration(seconds: 2));
     }
   }
   // -----------------------------------------------------------
 
   // --- FUNGSI: KIRIM NOTIFIKASI ---
   Future<void> sendNotification(String type) async {
-    print(donatur.value.jadwaID);
     isSendingNotif(true);
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -109,7 +105,7 @@ class DonaturDetailController extends GetxController {
         'user': userToken,
         'type': type,
         'donatur': donatur.value.kode ?? '', 
-        'jadwal': donatur.value.jadwaID ?? '' 
+        'jadwal': donatur.value.jadwalId ?? '' 
       };
       request.headers.addAll(headers);
 
@@ -118,7 +114,6 @@ class DonaturDetailController extends GetxController {
       
       if (response.statusCode == 200) {
         Get.snackbar('Sukses', 'Notifikasi berhasil dikirim!', backgroundColor: Colors.green, colorText: Colors.white);
-        
         final DonaturListController donaturListController = Get.find();
         await donaturListController.fetchDonaturList();
 

@@ -77,6 +77,7 @@ class DonaturListController extends GetxController {
         isLoading(false);
       }
     } catch (e) {
+      print(e);
       Get.snackbar('Error Rute', 'Terjadi kesalahan saat memuat rute: $e');
       selectedRuteName.value = 'Rute Error';
       isLoading(false);

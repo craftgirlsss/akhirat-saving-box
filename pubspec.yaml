@@ -23,7 +23,7 @@ dependencies:
   shared_preferences: ^2.3.2
   timelines_plus: ^1.0.3
   easy_date_timeline: ^1.1.3
-  device_info_plus: ^11.1.0
+  device_info_plus: ^10.1.2
   flutter_local_notifications: ^17.2.4
   flutter_downloader: ^1.11.8
   awesome_dialog: ^3.2.1
@@ -39,6 +39,7 @@ dependencies:
   http_parser: ^4.0.2
   share_plus: ^10.1.4
   syncfusion_flutter_datepicker: ^26.2.13
+  syncfusion_flutter_pdfviewer: ^26.2.8
   syncfusion_flutter_calendar: ^26.2.14
   syncfusion_flutter_datagrid: ^26.2.13
   package_info_plus: ^8.1.4
@@ -51,6 +52,7 @@ dependencies:
   flutter_cached_pdfview: ^0.4.3
   dropdown_button2: ^2.3.9
   path: ^1.9.1
+  dio: ^5.9.0
 
 dev_dependencies:
   flutter_test:

@@ -70,6 +70,7 @@ class DonaturListView extends StatelessWidget {
             _buildLegendItem(color: Colors.green, label: 'H: Jatuh tempo hari ini'),
             _buildLegendItem(color: Colors.purple, label: 'Rapel: Ada tunggakan pembayaran'),
             _buildLegendItem(color: Colors.blue, label: 'Jadwal Rapel: Terdapat jadwal rapel'),
+            _buildLegendDateItem()
           ],
         ),
         actions: [
@@ -92,6 +93,24 @@ class DonaturListView extends StatelessWidget {
           Expanded(child: Text(label)),
         ],
       ),
+    );
+  }
+
+  Widget _buildLegendDateItem() {
+    return Row(
+      children: [
+        Container(
+          width: 60,
+          padding: const EdgeInsets.symmetric(vertical: 3.0, horizontal: 10.0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(30.0),
+            color: Colors.green.shade400
+          ),
+          child: const Center(child: Text("Tanggal", style: TextStyle(fontSize: 9.0, color: Colors.white)))
+        ),
+        const SizedBox(width: 16),
+        const Expanded(child: Text("Sudah diset jadwal pengambilan")),
+      ],
     );
   }
 

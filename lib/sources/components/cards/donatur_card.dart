@@ -21,6 +21,7 @@ class DonaturCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
+          border: donatur.lokasiTerakhir?.lat != null && donatur.lokasiTerakhir?.lng != null ? Border.all(color: Colors.green) : null,
           color: Colors.white,
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
@@ -37,17 +38,29 @@ class DonaturCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  child: Text(
-                    '${index}. ${donatur.nama}',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      '$index. ${donatur.nama}',
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(width: 5.0),
+                    Container(
+                      width: 65,
+                      padding: const EdgeInsets.symmetric(vertical: 3.0),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(30.0),
+                        color: donatur.jadwalId != "0" ? Colors.green.shade400 : Colors.white,
+                      ),
+                      child: donatur.jadwalId != "0" ? Center(child: Text(donatur.tanggalPengambilan.toString(), style: const TextStyle(fontSize: 9.0, color: Colors.white))) : const SizedBox(),
+                    )
+                  ],
                 ),
                 _buildNotificationIcons(donatur),
               ],
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               'Kode: ${donatur.kode}',
               style: TextStyle(color: Colors.grey[700]),

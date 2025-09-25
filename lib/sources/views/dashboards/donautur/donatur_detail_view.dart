@@ -1,11 +1,14 @@
 import 'package:asb_app/sources/controllers/donatur_detail_controller.dart';
 import 'package:asb_app/sources/models/donatur_model.dart';
+import 'package:asb_app/sources/views/dashboards/donautur/konfirmasi_pengambilan_view.dart';
+import 'package:asb_app/sources/views/dashboards/donautur/perhitungan_perolehan_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DonaturDetailView extends StatelessWidget {
 
@@ -106,7 +109,7 @@ class DonaturDetailView extends StatelessWidget {
                                 children: [
                                   TileLayer(
                                     urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                    userAgentPackageName: 'com.example.app',
+                                    userAgentPackageName: 'akhirat.saving.app',
                                   ),
                                   MarkerLayer(markers: markers),
                                 ],
@@ -125,59 +128,106 @@ class DonaturDetailView extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 24),
-              _buildDetailCard(
-                title: 'Status Notifikasi',
-                children: [
-                  // Status notifikasi juga menggunakan currentDonatur
-                  _buildStatusRow(
-                    label: 'H-2',
-                    isActive: currentDonatur.h2 ?? false,
-                    color: Colors.red,
-                    onTap: () => controller.sendNotification('h2'),
-                  ),
-                  _buildStatusRow(
-                    label: 'H-1',
-                    isActive: currentDonatur.h1 ?? false,
-                    color: Colors.orange,
-                    onTap: () => controller.sendNotification('h1'),
-                  ),
-                  _buildStatusRow(
-                    label: 'H',
-                    isActive: currentDonatur.h ?? false,
-                    color: Colors.green,
-                    onTap: () => controller.sendNotification('h'),
-                  ),
-                  _buildStatusRow(
-                    label: 'Rapel',
-                    isActive: currentDonatur.rapel ?? false,
-                    color: Colors.purple,
-                    onTap: () => controller.sendNotification('rapel'),
-                  ),
-                  _buildStatusRow(
-                    label: 'Jadwal Rapel',
-                    isActive: currentDonatur.jadwalRapel ?? false,
-                    color: Colors.blue,
-                    onTap: () => controller.sendNotification('jadwal_rapel'),
-                  ),
-                ],
-              ),
+              Obx(() {
+                if(controller.donatur.value.jadwalId == "0"){
+                  return const SizedBox();
+                }
+
+                if(controller.donatur.value.lokasiTerakhir?.lat != null && controller.donatur.value.lokasiTerakhir?.lng != null){
+                  return const SizedBox();
+                }
+
+                return _buildDetailCard(
+                  title: 'Status Notifikasi',
+                  children: [
+                    // Status notifikasi juga menggunakan currentDonatur
+                    _buildStatusRow(
+                      label: 'H-2',
+                      isActive: currentDonatur.h2 ?? false,
+                      color: Colors.red,
+                      onTap: () => controller.sendNotification('h2'),
+                    ),
+                    _buildStatusRow(
+                      label: 'H-1',
+                      isActive: currentDonatur.h1 ?? false,
+                      color: Colors.orange,
+                      onTap: () => controller.sendNotification('h1'),
+                    ),
+                    _buildStatusRow(
+                      label: 'H',
+                      isActive: currentDonatur.h ?? false,
+                      color: Colors.green,
+                      onTap: () => controller.sendNotification('h'),
+                    ),
+                    _buildStatusRow(
+                      label: 'Rapel',
+                      isActive: currentDonatur.rapel ?? false,
+                      color: Colors.purple,
+                      onTap: () => controller.sendNotification('rapel'),
+                    ),
+                    _buildStatusRow(
+                      label: 'Jadwal Rapel',
+                      isActive: currentDonatur.jadwalRapel ?? false,
+                      color: Colors.blue,
+                      onTap: () => controller.sendNotification('jadwal_rapel'),
+                    ),
+                  ],
+                );
+              }),
               const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    // ...
-                  },
-                  icon: const Icon(EvaIcons.checkmark_circle),
-                  label: const Text('Konfirmasi Pengambilan', style: TextStyle(fontSize: 16)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+              Obx(() {
+                if(controller.donatur.value.jadwalId == "0"){
+                  return const SizedBox();
+                }
+
+                if(controller.donatur.value.lokasiTerakhir?.lat != null && controller.donatur.value.lokasiTerakhir?.lng != null && controller.donatur.value.status != "4"){
+                  return SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        // NAVIGASI KE HALAMAN PERHITUNGAN PEROLEHAN VIEW
+                        final currentDonatur = controller.donatur.value;
+                        final prefs = await SharedPreferences.getInstance();
+                        final userToken = prefs.getString('token') ?? ''; // Ambil user token lagi
+                        final jadwalId = currentDonatur.jadwalId ?? '';
+                        Get.off(() => PerhitunganPerolehanView(), arguments: {
+                          'jadwalID': jadwalId,
+                          'userToken': userToken,
+                          'namaDonatur': currentDonatur.nama
+                      }); 
+                      },
+                      icon: const Icon(Clarity.calculator_line, color: Colors.white),
+                      label: const Text('Hitung Perolehan', style: TextStyle(fontSize: 16, color: Colors.white)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueAccent,
+                        // ... (style lainnya)
+                      ),
+                    ),
+                  );
+                }
+
+                if(controller.donatur.value.lokasiTerakhir?.lat != null && controller.donatur.value.lokasiTerakhir?.lng != null && controller.donatur.value.status == "4"){
+                  return const SizedBox();
+                }
+
+                // NAVIGASI KE HALAMAN PERHITUNGAN PEROLEHAN VIEW
+                return SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      // NAVIGASI KE HALAMAN KONFIRMASI
+                      final currentDonatur = controller.donatur.value;
+                      Get.to(() => KonfirmasiPengambilanView(), arguments: currentDonatur); 
+                    },
+                    icon: const Icon(EvaIcons.checkmark_circle, color: Colors.white),
+                    label: const Text('Konfirmasi Pengambilan', style: TextStyle(fontSize: 16, color: Colors.white)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      // ... (style lainnya)
+                    ),
                   ),
-                ),
-              ),
+                ); 
+              }),
             ],
           ),
         ),
@@ -318,7 +368,14 @@ class DonaturDetailView extends StatelessWidget {
         Obx(() => SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: controller.isUpdatingJadwal.value ? null : controller.updateJadwal,
+              onPressed: controller.isUpdatingJadwal.value ? null : (){
+                controller.updateJadwal().then((result){
+                  Future.delayed(const Duration(seconds: 2), (){
+                    Get.back();
+                    Navigator.pop(context);
+                  });
+                });
+              },
               icon: controller.isUpdatingJadwal.value 
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : const Icon(Icons.save),
@@ -340,12 +397,14 @@ class DonaturDetailView extends StatelessWidget {
   }
 
   // FUNGSI BARU: Date Picker
-  Future<void> _selectDate(BuildContext context) async {
+Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
         context: context,
         initialDate: controller.selectedDate.value ?? DateTime.now(),
-        firstDate: DateTime.now().subtract(const Duration(days: 365)),
-        lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+        // Batas awal: Hari ini
+        firstDate: DateTime.now(),
+        // Batas akhir: 2 bulan dari sekarang
+        lastDate: DateTime.now().add(const Duration(days: 60)),
         builder: (context, child) => Theme(
             data: ThemeData.light().copyWith(
               colorScheme: const ColorScheme.light(primary: Colors.blueAccent),
@@ -356,7 +415,7 @@ class DonaturDetailView extends StatelessWidget {
     if (picked != null) {
       controller.selectedDate.value = picked;
     }
-  }
+}
 
   // FUNGSI BARU: Time Picker
   Future<void> _selectTime(BuildContext context) async {

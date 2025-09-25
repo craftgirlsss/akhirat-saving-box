@@ -34,31 +34,31 @@ class _SplashscreenState extends State<Splashscreen> {
   @override
   void initState() {  
     super.initState();
-    Future.delayed(const Duration(seconds: 2), (){
-      getLogin().then((login){
-        if(login) {
-          getToken().then((token) {
-            if(token != null){
-              debugPrint("ini token user $token");
-              authController.token.value = token;
-              authController.getProfileController(token: token).then((value){
-                if(value){
-                  Get.offAll(() => DashboardView());
-                  // Get.off(() => const Mainpage());
-                }else{
-                  Get.snackbar("Gagal", "Gagal mendapatkan informasi akun anda, silahkan login ulang!", backgroundColor: Colors.red, colorText: Colors.white, duration: const Duration(seconds: 2));
-                  removeToken().then((deleted) => Get.off(() => const IntroductionScreen()));
-                }
-              });
-            }else{
-              Get.snackbar("Gagal", "Gagal mendapatkan ID akun anda", backgroundColor: Colors.red, colorText: Colors.white, duration: const Duration(seconds: 2));
-              Get.off(() => const IntroductionScreen());
-            }
-          });
+    Future.delayed(const Duration(seconds: 2), () async {
+      final bool isLoggedIn = await getLogin();
+
+      if (isLoggedIn) {
+        final String? token = await getToken();
+
+        if (token != null) {
+          debugPrint("ini token user $token");
+          authController.token.value = token;
+          final bool profileSuccess = await authController.getProfileController(token: token);
+
+          if (profileSuccess) {
+            Get.offAll(() => DashboardView());
+          } else {
+            Get.snackbar("Gagal", "Gagal mendapatkan informasi akun anda, silahkan login ulang!", backgroundColor: Colors.red, colorText: Colors.white, duration: const Duration(seconds: 2));
+            await removeToken();
+            Get.off(() => const IntroductionScreen());
+          }
         } else {
+          Get.snackbar("Gagal", "Gagal mendapatkan ID akun anda", backgroundColor: Colors.red, colorText: Colors.white, duration: const Duration(seconds: 2));
           Get.off(() => const IntroductionScreen());
         }
-      });
+      } else {
+        Get.off(() => const IntroductionScreen());
+      }
     });
   }
 
