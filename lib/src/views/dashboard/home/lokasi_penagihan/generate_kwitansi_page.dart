@@ -1,16 +1,13 @@
 import 'dart:io';
-
 import 'package:asb_app/src/components/global/index.dart';
 import 'package:asb_app/src/components/textformfield/rounded_rectangle_text_field.dart';
 import 'package:asb_app/src/controllers/utilities/cupertino_dialogs.dart';
 import 'package:asb_app/src/controllers/wilayah/wilayah_controller.dart';
 import 'package:asb_app/src/helpers/currency_formator.dart';
-import 'package:asb_app/src/views/dashboard/home/lokasi_penagihan/pdf_viewer_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cached_pdfview/flutter_cached_pdfview.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
-import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:get/get.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:intl/intl.dart';
@@ -34,9 +31,13 @@ class _GenerateKwitansiPageState extends State<GenerateKwitansiPage> {
   TextEditingController jumlahDalamBahasa = TextEditingController();
   TextEditingController program = TextEditingController();
   TextEditingController tanggalPembuatanKwitansi = TextEditingController();
+  TextEditingController namaPengesahKwitansi = TextEditingController();
 
   WilayahController wilayahController = Get.put(WilayahController());
   final _formKey = GlobalKey<FormState>();
+
+  RxBool isLoading = false.obs;
+  RxString pengurusID = ''.obs;
 
   RxString jadwalIDForShortcut = "".obs;
   
@@ -64,7 +65,13 @@ class _GenerateKwitansiPageState extends State<GenerateKwitansiPage> {
   void initState() {
     super.initState();
     selectedDate(dateFormattedYearAndMonthV2(time: now));
-    Future.delayed(const Duration(seconds: 1), (){
+    Future.delayed(Duration.zero, (){
+      wilayahController.getPengurus().then((result) {
+        if(result){
+          namaPengesahKwitansi.text = "${wilayahController.pengurusModels.value?.data[0].name} - ${wilayahController.pengurusModels.value?.data[0].jabatan}";
+          pengurusID(wilayahController.pengurusModels.value?.data[0].id);
+        }
+      });
       if(widget.fromTableView != null || widget.fromTableView == true){
         jadwalIDForShortcut(widget.jadwalID);
         wilayahController.getDonaturFinnishedByJadwalID(jadwalID: widget.jadwalID).then((result) {
@@ -76,15 +83,6 @@ class _GenerateKwitansiPageState extends State<GenerateKwitansiPage> {
             // if(wilayahController.detailDonaturFinnish.value?.data. != ""){
             //   jumlahDalamBahasa.text = wilayahController.detailDonaturFinnish.value?.data.namaP
             // }
-          }
-        });
-      }else{
-        wilayahController.getDonaturFinnished(date: selectedDate.value).then((result) {
-          if(result){
-            namaList([]); // reset data di list temp
-            for(int i = 0; i < wilayahController.donaturFinnishedModels.value!.data.length; i++){
-              namaList.add(wilayahController.donaturFinnishedModels.value?.data[i].nama ?? "Unknown Name");
-            }
           }
         });
       }
@@ -118,55 +116,56 @@ class _GenerateKwitansiPageState extends State<GenerateKwitansiPage> {
           ),
           title: const Text("Buat Kuitansi"),
           actions: [
-            widget.fromTableView == null || widget.fromTableView == false ? showPDFPreview.value ? Obx(() {
-              if(wilayahController.urlPDFGenerated.value != ""){
-                return CupertinoButton(
-                  onPressed: () async {
-                    if(await Permission.manageExternalStorage.isGranted){
-                      var dir = await getDownloadsDirectory();
-                      String? fileName = wilayahController.fileName.value;
-                      String? filePath = "/storage/emulated/0/Download/$fileName";
-                      bool? isAvailableFile = await File(filePath).exists();
-
-                      if(!isAvailableFile){
-                        if(dir != null){
-                          final taskID = await FlutterDownloader.enqueue(
-                            allowCellular: true,
-                            url: wilayahController.urlPDFGenerated.value,
-                            fileName: fileName,
-                            saveInPublicStorage: true,
-                            savedDir: "/storage/emulated/0/Download/",
-                            showNotification: true,
-                          );
-                          if(taskID != null){
-                            await OpenFile.open(filePath);
+            Obx(() => isLoading.value ? const SizedBox() : widget.fromTableView == null || widget.fromTableView == false ? showPDFPreview.value ? Obx(() {
+                if(wilayahController.urlPDFGenerated.value != ""){
+                  return CupertinoButton(
+                    onPressed: () async {
+                      if(await Permission.manageExternalStorage.isGranted){
+                        var dir = await getDownloadsDirectory();
+                        String? fileName = wilayahController.fileName.value;
+                        String? filePath = "/storage/emulated/0/Download/$fileName";
+                        bool? isAvailableFile = await File(filePath).exists();
+              
+                        if(!isAvailableFile){
+                          if(dir != null){
+                            final taskID = await FlutterDownloader.enqueue(
+                              allowCellular: true,
+                              url: wilayahController.urlPDFGenerated.value,
+                              fileName: fileName,
+                              saveInPublicStorage: true,
+                              savedDir: "/storage/emulated/0/Download/",
+                              showNotification: true,
+                            );
+                            if(taskID != null){
+                              await OpenFile.open(filePath);
+                            }else{
+                              print("Donwload gagal");
+                            }
                           }else{
-                            print("Donwload gagal");
+                            Get.snackbar("Gagal", "Gagal menemukan filepath");  
                           }
                         }else{
-                          Get.snackbar("Gagal", "Gagal menemukan filepath");  
+                          Get.snackbar("Gagal", "Kwitansi sudah ada di folder Download", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
                         }
                       }else{
-                        Get.snackbar("Gagal", "Kwitansi sudah ada di folder Download", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
+                        await Permission.manageExternalStorage.request();
                       }
-                    }else{
-                      await Permission.manageExternalStorage.request();
-                    }
-                  },
-                  child: Obx(() => wilayahController.isLoading.value ? const CupertinoActivityIndicator(color: GlobalVariable.secondaryColor) : const Text("Download File", style: TextStyle(color: GlobalVariable.secondaryColor))),
-                );
-              }else{
-                Get.snackbar("Gagal", "Gagal mendownload file karena URL tidak ditemukan", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
-              }
-              return Container();
-            }) : const SizedBox() : const SizedBox()
+                    },
+                    child: Obx(() => wilayahController.isLoading.value ? const CupertinoActivityIndicator(color: GlobalVariable.secondaryColor) : const Text("Download File", style: TextStyle(color: GlobalVariable.secondaryColor))),
+                  );
+                }else{
+                  Get.snackbar("Gagal", "Gagal mendownload file karena URL tidak ditemukan", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
+                }
+                return Container();
+              }) : const SizedBox() : const SizedBox(),
+            )
           ],
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
           child: Form(
             key: _formKey,
-            child: Obx(() => Column(
+            child: Column(
                 children: [
                   widget.fromTableView == null || widget.fromTableView == false ? const SizedBox() : Container(
                     margin: const EdgeInsets.symmetric(horizontal: 8),
@@ -226,85 +225,87 @@ class _GenerateKwitansiPageState extends State<GenerateKwitansiPage> {
                       ],
                     ),
                   ),
-                  widget.fromTableView == null || widget.fromTableView == false ? showTablePerolehan.value ? 
-                    widget.fromTableView == true ?
-                      Column(
-                        children: [
-                          const Text("Perolehan", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 5),
-                          Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 8),
-                            width: size.width,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(7),
-                              border: Border.all(color: Colors.black26, width: 0.5),
+                  Obx(() => isLoading.value ? const SizedBox() : widget.fromTableView != null || widget.fromTableView == true ? showTablePerolehan.value ? 
+                      widget.fromTableView == true ?
+                        Column(
+                          children: [
+                            const Text("Perolehan", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 5),
+                            Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 8),
+                              width: size.width,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(7),
+                                border: Border.all(color: Colors.black26, width: 0.5),
+                              ),
+                              child: Obx(() => wilayahController.isLoading.value ? const SizedBox() : DataTable(
+                                  columns: const <DataColumn>[
+                                    DataColumn(
+                                      label: Expanded(child: Text('Satuan', style: TextStyle(fontStyle: FontStyle.italic))),
+                                    ),
+                                    DataColumn(
+                                      label: Expanded(child: Text('Jumlah', style: TextStyle(fontStyle: FontStyle.italic))),
+                                    ),
+                                    DataColumn(
+                                      label: Expanded(child: Text('Total', style: TextStyle(fontStyle: FontStyle.italic))),
+                                    ),
+                                  ],
+                                  rows: List.generate(wilayahController.detailDonaturFinnish.value!.data.summary.length, (i) {
+                                    return DataRow(
+                                      cells: [
+                                        DataCell(Text(wilayahController.detailDonaturFinnish.value!.data.summary[i][0].toString())),
+                                        DataCell(Text(wilayahController.detailDonaturFinnish.value!.data.summary[i][1].toString())),
+                                        DataCell(Text(formatCurrencyId.format(wilayahController.detailDonaturFinnish.value!.data.summary[i][2]))),
+                                      ]
+                                    );
+                                  })
+                                ),
+                              ),
                             ),
-                            child: DataTable(
-                              columns: const <DataColumn>[
-                                DataColumn(
-                                  label: Expanded(child: Text('Satuan', style: TextStyle(fontStyle: FontStyle.italic))),
-                                ),
-                                DataColumn(
-                                  label: Expanded(child: Text('Jumlah', style: TextStyle(fontStyle: FontStyle.italic))),
-                                ),
-                                DataColumn(
-                                  label: Expanded(child: Text('Total', style: TextStyle(fontStyle: FontStyle.italic))),
-                                ),
-                              ],
-                              rows: List.generate(wilayahController.detailDonaturFinnish.value!.data.summary.length, (i) {
-                                return DataRow(
-                                  cells: [
-                                    DataCell(Text(wilayahController.detailDonaturFinnish.value!.data.summary[i][0].toString())),
-                                    DataCell(Text(wilayahController.detailDonaturFinnish.value!.data.summary[i][1].toString())),
-                                    DataCell(Text(formatCurrencyId.format(wilayahController.detailDonaturFinnish.value!.data.summary[i][2]))),
-                                  ]
-                                );
-                              })
+                            const SizedBox(height: 10),
+                            const Divider(height: 0.5),
+                            const SizedBox(height: 10),
+                          ],
+                        ) : wilayahController.donaturFinnishedModels.value?.data.length != 0 ? Column(
+                          children: [
+                            const Text("Perolehan", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 5),
+                            Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 8),
+                              width: size.width,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(7),
+                                border: Border.all(color: Colors.black26, width: 0.5),
+                              ),
+                              child: DataTable(
+                                columns: const <DataColumn>[
+                                  DataColumn(
+                                    label: Expanded(child: Text('Satuan', style: TextStyle(fontStyle: FontStyle.italic))),
+                                  ),
+                                  DataColumn(
+                                    label: Expanded(child: Text('Jumlah', style: TextStyle(fontStyle: FontStyle.italic))),
+                                  ),
+                                  DataColumn(
+                                    label: Expanded(child: Text('Total', style: TextStyle(fontStyle: FontStyle.italic))),
+                                  ),
+                                ],
+                                rows: List.generate(wilayahController.donaturFinnishedModels.value!.data[selectedNama.value].summary.length, (i) {
+                                  return DataRow(
+                                    cells: [
+                                      DataCell(Text(wilayahController.donaturFinnishedModels.value!.data[selectedNama.value].summary[i][0].toString())),
+                                      DataCell(Text(wilayahController.donaturFinnishedModels.value!.data[selectedNama.value].summary[i][1].toString())),
+                                      DataCell(Text(formatCurrencyId.format(wilayahController.donaturFinnishedModels.value!.data[selectedNama.value].summary[i][2]))),
+                                    ]
+                                  );
+                                })
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 10),
-                          const Divider(height: 0.5),
-                          const SizedBox(height: 10),
-                        ],
-                      ) : wilayahController.donaturFinnishedModels.value?.data.length != 0 ? Column(
-                        children: [
-                          const Text("Perolehan", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 5),
-                          Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 8),
-                            width: size.width,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(7),
-                              border: Border.all(color: Colors.black26, width: 0.5),
-                            ),
-                            child: DataTable(
-                              columns: const <DataColumn>[
-                                DataColumn(
-                                  label: Expanded(child: Text('Satuan', style: TextStyle(fontStyle: FontStyle.italic))),
-                                ),
-                                DataColumn(
-                                  label: Expanded(child: Text('Jumlah', style: TextStyle(fontStyle: FontStyle.italic))),
-                                ),
-                                DataColumn(
-                                  label: Expanded(child: Text('Total', style: TextStyle(fontStyle: FontStyle.italic))),
-                                ),
-                              ],
-                              rows: List.generate(wilayahController.donaturFinnishedModels.value!.data[selectedNama.value].summary.length, (i) {
-                                return DataRow(
-                                  cells: [
-                                    DataCell(Text(wilayahController.donaturFinnishedModels.value!.data[selectedNama.value].summary[i][0].toString())),
-                                    DataCell(Text(wilayahController.donaturFinnishedModels.value!.data[selectedNama.value].summary[i][1].toString())),
-                                    DataCell(Text(formatCurrencyId.format(wilayahController.donaturFinnishedModels.value!.data[selectedNama.value].summary[i][2]))),
-                                  ]
-                                );
-                              })
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          const Divider(height: 0.5),
-                          const SizedBox(height: 10),
-                        ],
-                      ) : const SizedBox() : const SizedBox() : const SizedBox(),
+                            const SizedBox(height: 10),
+                            const Divider(height: 0.5),
+                            const SizedBox(height: 10),
+                          ],
+                        ) : const SizedBox() : const SizedBox() : const SizedBox(),
+                  ),
                   widget.fromTableView == null || widget.fromTableView == false 
                   ? CustomRoundedTextField(controller: name, label: "Nama", placeholder: "Mohon inputkan nama", keyboardType: TextInputType.name, errorText: "Mohon inputkan nama",)
                   : Obx(() => CustomRoundedTextField(controller: name, label: "Nama", errorText: "Mohon pilih nama", placeholder: wilayahController.isLoading.value ? "Mendapatkan Nama..." : "Pilih", readOnly: true, onTap: widget.fromTableView != null || widget.fromTableView == true ? null : (){
@@ -328,7 +329,7 @@ class _GenerateKwitansiPageState extends State<GenerateKwitansiPage> {
                             program.text = wilayahController.donaturFinnishedModels.value?.data[selectedNama.value].namaProgram != null ? wilayahController.donaturFinnishedModels.value!.data[selectedNama.value].namaProgram : "Unknown Program";
                           },
                           children: List<Widget>.generate(namaList.length, (int index) {
-                            return Obx(() => Center(child: Text(namaList[index])));
+                            return Obx(() => Center(child: Text(namaList[index], style: const TextStyle(fontSize: 14))));
                           }),
                         ),
                       ));
@@ -337,6 +338,22 @@ class _GenerateKwitansiPageState extends State<GenerateKwitansiPage> {
                   CustomRoundedTextField(controller: jumlah, label: "Jumlah", placeholder: "Inputkan jumlah", keyboardType: TextInputType.number, readOnly: widget.fromTableView == null || widget.fromTableView == false ? false : true, errorText: "Mohon isikan jumlah",),
                   // CustomRoundedTextField(controller: jumlahDalamBahasa, label: "Jumlah dalam kalimat bahasa indonesia", placeholder: "Inputkan jumlah", keyboardType: TextInputType.name, errorText: "Mohon isikan jumlah dalam bahasa indonesia"),
                   CustomRoundedTextField(controller: program, label: "Program", placeholder: "Mohon inputkan nama program", readOnly: widget.fromTableView == null || widget.fromTableView == false ? false : true, errorText: "Mohon isikan program", keyboardType: TextInputType.name),
+                  // Pengesah Kwitansi
+                  CustomRoundedTextField(controller: namaPengesahKwitansi, label: "Nama Pengesah Kwitansi", placeholder: "Mohon pilih nama pengesah", readOnly: true, errorText: "Mohon isikan nama pengesah", onTap: (){
+                    customCupertinoDialog(context, child: Obx(
+                      () => CupertinoPicker.builder(
+                        itemExtent: 32,
+                        childCount: wilayahController.pengurusModels.value?.data.length ?? 0,
+                        onSelectedItemChanged: (value) {
+                          namaPengesahKwitansi.text = "${wilayahController.pengurusModels.value?.data[value].name} - ${wilayahController.pengurusModels.value?.data[value].jabatan}";
+                          pengurusID(wilayahController.pengurusModels.value?.data[value].id);
+                        }, 
+                        itemBuilder: (context, index) {
+                          return Center(child: Text("${wilayahController.pengurusModels.value?.data[index].name} - ${wilayahController.pengurusModels.value?.data[index].jabatan}", style: const TextStyle(fontSize: 14)));
+                        },
+                      ),
+                    ));
+                  }),
                   
                   //Preview PDF Manual after post to API
                   widget.fromTableView == null || widget.fromTableView == false 
@@ -354,7 +371,6 @@ class _GenerateKwitansiPageState extends State<GenerateKwitansiPage> {
               ),
             ),
           ),
-        ),
         bottomNavigationBar: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           child: Obx(() => 
@@ -377,7 +393,8 @@ class _GenerateKwitansiPageState extends State<GenerateKwitansiPage> {
                     if(await wilayahController.generateKwitansiManual(
                       name: name.text,
                       jumlah: jumlah.text,
-                      program: program.text
+                      program: program.text,
+                      pengurusID: pengurusID.value
                     )){
                       showPDFPreview(true);
                     }else{
@@ -386,7 +403,8 @@ class _GenerateKwitansiPageState extends State<GenerateKwitansiPage> {
                   }else{
                     if(await wilayahController.generateKwitansi(
                       terbilang: jumlahDalamBahasa.text,
-                      jadwalID: jadwalIDForShortcut.value
+                      jadwalID: jadwalIDForShortcut.value,
+                      pengurusID: pengurusID.value
                     )){
                       if(wilayahController.urlPDFGenerated.value != ""){
                         if(await Permission.manageExternalStorage.isGranted){

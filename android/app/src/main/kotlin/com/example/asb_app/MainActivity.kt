@@ -1,4 +1,4 @@
-package akhirat.saving.box
+package akhirat.saving.app
 
 import io.flutter.embedding.android.FlutterActivity
 

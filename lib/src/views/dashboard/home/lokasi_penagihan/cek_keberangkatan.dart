@@ -226,17 +226,17 @@ class _CekKeberangkatanState extends State<CekKeberangkatan> {
                     urlImage2: urlPhotoSepatu.value,
                     urlImage3: urlPhotoMotor.value
                   )){
-                    trackingController.wasSelfieAsFirst.value = true;
+                    trackingController.wasSelfieAsFirst.value = false;
                     Get.snackbar("Berhasil", "Berhasil upload foto mengakhiri pekerjaan hari ini", backgroundColor: Colors.green, colorText: Colors.white);
-                    Future.delayed(const Duration(seconds: 1), (){
-                      trackingController.checkingSelfFirst();
+                    Future.delayed(const Duration(seconds: 1), () async {
+                      await trackingController.checkingSelfFirst();
                       Get.off(() => const Mainpage());
                     });
                   }
                 }
               }
             },
-            child: Obx(() => trackingController.isLoading.value ? const SizedBox(height: 20, child: CircularProgressIndicator(color: Colors.white)) : const Text("Submit")), 
+            child: Obx(() => trackingController.isLoading.value ? const SizedBox(height: 20, child: CircularProgressIndicator(color: Colors.white)) : const Text("Submit", style: TextStyle(color:Colors.white))), 
           ),
         ),
       ),

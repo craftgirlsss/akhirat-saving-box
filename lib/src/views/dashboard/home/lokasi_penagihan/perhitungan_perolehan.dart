@@ -77,49 +77,6 @@ class _PerhitunganPerolehanState extends State<PerhitunganPerolehan> {
         body: SingleChildScrollView(
           child: Column(
             children: [
-              // Container(
-              //   color: Colors.transparent,
-              //   height: size.height / 3,
-              //   child: SingleChildScrollView(
-              //     physics: const BouncingScrollPhysics(),
-              //     scrollDirection: Axis.horizontal,
-              //     child: Row(
-              //       children: List.generate(imageProof.length + 1, (i) {
-              //         if(i != imageProof.length){
-              //           return Container(
-              //             width: 200,
-              //             height: 200,
-              //             clipBehavior: Clip.hardEdge,
-              //             margin: const EdgeInsets.symmetric(horizontal: 5),
-              //             decoration: BoxDecoration(
-              //               color: Colors.transparent,
-              //               border: Border.all(color: Colors.black45),
-              //               borderRadius: BorderRadius.circular(5),
-              //             ),
-              //             child: Image.file(File(imageProof[i]), fit: BoxFit.cover,),
-              //           );
-              //         }
-              //         return CupertinoButton(
-              //           padding: EdgeInsets.zero,
-              //           onPressed: (){
-              //             pickImageFromCamera();
-              //           },
-              //           child: Container(
-              //             width: 200,
-              //             height: 200,
-              //             padding: const EdgeInsets.all(15),
-              //             decoration: BoxDecoration(
-              //               color: Colors.transparent,
-              //               border: Border.all(color: Colors.black26),
-              //               borderRadius: BorderRadius.circular(5)
-              //             ),
-              //             child: const Icon(Icons.add_a_photo, color: Colors.black45),
-              //           ),
-              //         );
-              //       }),
-              //     ),
-              //   ),
-              // ),
               const Divider(),
               const SizedBox(height: 20),
               Padding(
@@ -286,7 +243,7 @@ class _PriceCounterState extends State<PriceCounter> {
   RxBool isLoading = false.obs;
   RxInt result = 0.obs;
   String? removeKoma;
-  TextEditingController counter = TextEditingController(text: '0');
+  TextEditingController counter = TextEditingController(text: '');
 
   @override
   void initState() {

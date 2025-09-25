@@ -17,8 +17,6 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
-List<String> list2 = <String>['Semua', 'Rapel'];
-
 class DaftarLokasiTagihanv2 extends StatefulWidget {
   const DaftarLokasiTagihanv2({super.key, this.restorationId, this.isReminder});
   final String? restorationId;
@@ -78,6 +76,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
 
   TextEditingController catatanDefault = TextEditingController();
   TextEditingController catatanKhusus = TextEditingController();
+  RxString selectedRoutesName = "".obs;
 
   TextEditingController latitude = TextEditingController();
   TextEditingController longitude = TextEditingController();
@@ -91,6 +90,28 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
       _time = newTime;
     });
   }
+
+  String dayName = "";
+  String dateToLocal({DateTime? time}){
+    switch (time!.weekday) {
+      case DateTime.monday:
+        return "Senin";
+      case DateTime.tuesday:
+        return "Selasa";
+      case DateTime.wednesday:
+        return "Rabu";
+      case DateTime.thursday:
+        return "Kamis";
+      case DateTime.friday:
+        return "Jum'at";
+      case DateTime.saturday:
+        return "Sabtu";
+      case DateTime.sunday:
+        return "Ahad";
+      default:
+        return "Kosong";
+      }
+    }
 
 
   // Fungsi picker edit date
@@ -114,6 +135,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
     super.initState();
     wilayahController.getWilayah().then((result){
       if(result){
+        selectedRoutesName(wilayahController.wilayahModels.value?.data[selectedRuteIndex.value].nama);
         // daftarRute.value = [];
         // for(int i = 0; i<wilayahController.wilayahModels.value!.data.length; i++){
         //   daftarRute.add(wilayahController.wilayahModels.value!.data[i].nama);
@@ -145,6 +167,8 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
 
   @override
   Widget build(BuildContext context) {
+    print(dateToLocal(time: DateTime.now()));
+    // print(DateTime.parse(trackingController.listRuteTerbaru.value!.data![0].tanggalPengambilan!));
     Size size = MediaQuery.of(context).size;
     return Obx(() => isLoading.value ? const SizedBox() : RefreshIndicator(
         backgroundColor: GlobalVariable.secondaryColor,
@@ -188,6 +212,45 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
+                          Expanded(
+                            child: Obx(
+                              () => ClipRRect(
+                                borderRadius: const BorderRadius.only(topLeft: Radius.circular(5.0), topRight: Radius.circular(5.0)),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.withOpacity(.1),
+                                    border: const Border(
+                                      left: BorderSide(
+                                        color: Colors.blue,
+                                        width: 8,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: DropdownButton<String>(
+                                      underline: const SizedBox(),borderRadius: BorderRadius.circular(10.0),
+                                      elevation: 1,
+                                      dropdownColor: Colors.white,
+                                      value: selectedRoutesName.value,
+                                      onChanged: (String? value) {
+                                        selectedRoutesName(value!);
+                                        selectedRuteIndex.value = wilayahController.wilayahModels.value!.data.indexWhere((model) => model.nama == value);
+                                        wilayahID.value = wilayahController.wilayahModels.value!.data[selectedRuteIndex.value].id;
+                                        trackingController.getRuteV2(ruteID: wilayahID.value, type: daftarTipe[selectedTipeIndex.value], tanggal: selectedDate.value).then((result){
+                                          print(result);
+                                        });
+                                      },
+                                      items: List.generate(wilayahController.wilayahModels.value?.data.length ?? 0, (i){
+                                        return DropdownMenuItem(value: wilayahController.wilayahModels.value?.data[i].nama ?? "Rute 0", child: Text(wilayahController.wilayahModels.value?.data[i].nama ?? "Rute 0"));
+                                      }),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          )
+                          /*
                           const Text('Pilih Wilayah/Rute: '),
                           Obx(() => CupertinoButton(
                               padding: EdgeInsets.zero,
@@ -205,6 +268,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                                     if(wilayahController.wilayahModels.value != null){
                                       wilayahID.value = wilayahController.wilayahModels.value!.data[selectedRuteIndex.value].id;
                                     }
+                                    print(wilayahID);
                                     trackingController.getRuteV2(ruteID: wilayahID.value, type: daftarTipe[selectedTipeIndex.value], tanggal: selectedDate.value).then((result){
                                       print(result);
                                     });
@@ -215,6 +279,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                               child: Obx(() => Text(wilayahController.wilayahModels.value?.data[selectedRuteIndex.value].nama ?? "Unknown", style: const TextStyle(color: GlobalVariable.secondaryColor, fontWeight: FontWeight.bold, fontSize: 14))),
                             ),
                           ),
+                          */
                         ],
                       ),
                     ),
@@ -375,7 +440,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                                           DataCell(CupertinoButton(
                                             padding: EdgeInsets.zero,
                                             onPressed: (){
-                                              if(trackingController.listRuteTerbaru.value?.data?[i].lokasiPenukaran?.lat == "" || trackingController.listRuteTerbaru.value?.data?[i].lokasiPenukaran?.lng == ""){
+                                              if(trackingController.listRuteTerbaru.value?.data?[i].lokasiPenukaran?.lat == "" && trackingController.listRuteTerbaru.value?.data?[i].lokasiPenukaran?.lng == ""){
                                                 wilayahController.getDonatrurLokasiByDonaturKode(donaturKode: trackingController.listRuteTerbaru.value?.data?[i].kode).then((result){
                                                   if(result){
                                                     _showAlertDialogEditLatLongKosong(context, name: trackingController.listRuteTerbaru.value?.data?[i].nama, lokasiID: wilayahController.lokasiDonaturModels.value?.data[0].id);
@@ -385,16 +450,20 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                                                   }
                                                 });
                                               }else{
-                                                Get.to<dynamic>(() => DetailLokasi(
-                                                  kodeASB: trackingController.listRuteTerbaru.value!.data![i].kode,
-                                                  status: trackingController.listRuteTerbaru.value!.data![i].status,
-                                                  code: trackingController.listRuteTerbaru.value!.data![i].id,
-                                                  jadwaID: trackingController.listRuteTerbaru.value!.data![i].jadwalID,
-                                                  latitude: double.parse(trackingController.listRuteTerbaru.value!.data![i].lokasiPenukaran!.lat!),
-                                                  longitude: double.parse(trackingController.listRuteTerbaru.value!.data![i].lokasiPenukaran!.lng!),
-                                                  name: trackingController.listRuteTerbaru.value!.data![i].nama,
-                                                  subtitle: trackingController.listRuteTerbaru.value!.data![i].alamat,
-                                                ));
+                                                if(trackingController.listRuteTerbaru.value?.data?[i].rapel == true || trackingController.listRuteTerbaru.value?.data?[i].jadwalRapel == true){
+                                                  showAlertDialog(context, title: "Informasi", content: "Atur terlebih dahulu tanggal pengambilan, karena anda telah melakukan pemberitahuan kepada donatur untuk jadwal rapel", onlyOKButton: true);
+                                                }else{
+                                                  Get.to<dynamic>(() => DetailLokasi(
+                                                    kodeASB: trackingController.listRuteTerbaru.value!.data![i].kode,
+                                                    status: trackingController.listRuteTerbaru.value!.data![i].status,
+                                                    code: trackingController.listRuteTerbaru.value!.data![i].id,
+                                                    jadwaID: trackingController.listRuteTerbaru.value!.data![i].jadwalID,
+                                                    latitude: double.parse(trackingController.listRuteTerbaru.value!.data![i].lokasiPenukaran!.lat!),
+                                                    longitude: double.parse(trackingController.listRuteTerbaru.value!.data![i].lokasiPenukaran!.lng!),
+                                                    name: trackingController.listRuteTerbaru.value!.data![i].nama,
+                                                    subtitle: trackingController.listRuteTerbaru.value!.data![i].alamat,
+                                                  ));
+                                                }
                                               }
                                             },
                                             child: SizedBox(
@@ -417,6 +486,9 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                                                   onChangeDateTime: (DateTime p0) {
                                                     trackingController.listRuteTerbaru.value?.data?[i].tanggalPengambilan = DateFormat("yyyy-MM-dd hh:mm:ss").format(p0);
                                                     trackingController.listRuteTerbaru.value?.data?[i].jam = DateFormat("hh:mm:ss").format(p0);
+                                                    if(trackingController.listRuteTerbaru.value?.data?[i].jam == "00:00:00" || trackingController.listRuteTerbaru.value?.data?[i].jam == null){
+                                                      trackingController.listRuteTerbaru.value?.data?[i].jam = "10:00:00";
+                                                    }
                                                     trackingController.ubahTanggalRapel(
                                                       jam: trackingController.listRuteTerbaru.value?.data?[i].jam,
                                                       donaturID: trackingController.listRuteTerbaru.value?.data?[i].id,
@@ -436,7 +508,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                                                 ),
                                               );
                                             },
-                                            child: Text(trackingController.listRuteTerbaru.value?.data?[i].jam ?? i.toString(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),)))),
+                                            child: Text(trackingController.listRuteTerbaru.value?.data?[i].jam ?? "Kosong", style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),)))),
                                           // Tanggal
                                           DataCell(Obx(() => GestureDetector(
                                             onTap: trackingController.isLoading.value ? null : () async {
@@ -448,6 +520,10 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                                               );
                                               if(pickedDate != null){
                                                 String? updatedFDate = DateFormat("yyyy-MM-dd").format(pickedDate);
+                                                print(updatedFDate);
+                                                if(trackingController.listRuteTerbaru.value?.data?[i].jam == "00:00:00" || trackingController.listRuteTerbaru.value?.data?[i].jam == null){
+                                                  trackingController.listRuteTerbaru.value?.data?[i].jam = "10:00:00";
+                                                }
                                                 trackingController.ubahTanggal(
                                                   jam: trackingController.listRuteTerbaru.value?.data?[i].jam,
                                                   donaturID: trackingController.listRuteTerbaru.value?.data?[i].id,
@@ -465,27 +541,55 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                                                 });
                                               }
                                             },
-                                            child: Text(DateFormat('EEEE').format(DateTime.parse(trackingController.listRuteTerbaru.value!.data![i].tanggalPengambilan!)), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold))
+                                            child: trackingController.listRuteTerbaru.value?.data?[i].tanggalPengambilan == null ? const Text("Kosong", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)) : Text(dateToLocal(time: DateTime.parse(trackingController.listRuteTerbaru.value!.data![i].tanggalPengambilan!)), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold))
+                                            // child: Text(DateFormat('EEEE').format(DateTime.parse(trackingController.listRuteTerbaru.value!.data![i].tanggalPengambilan!)), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold))
                                             ),
                                           )),
                                                   
                                           //Hari
                                           DataCell(Obx(() => GestureDetector(
-                                            onTap: trackingController.isLoading.value ? null : () async {},
-                                            child: Text(trackingController.listRuteTerbaru.value?.data?[i].tanggalPengambilan ?? i.toString(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),)))),
+                                            onTap: trackingController.isLoading.value ? null : () async {
+                                              final DateTime? pickedDate = await showDatePicker(
+                                                context: context,
+                                                initialDate: now,
+                                                firstDate: now,
+                                                lastDate: DateTime(now.year, now.month+1, now.day),
+                                              );
+                                              if(pickedDate != null){
+                                                String? updatedFDate = DateFormat("yyyy-MM-dd").format(pickedDate);
+                                                print(updatedFDate);
+                                                if(trackingController.listRuteTerbaru.value?.data?[i].jam == "00:00:00" || trackingController.listRuteTerbaru.value?.data?[i].jam == null){
+                                                  trackingController.listRuteTerbaru.value?.data?[i].jam = "10:00:00";
+                                                }
+                                                trackingController.ubahTanggal(
+                                                  jam: trackingController.listRuteTerbaru.value?.data?[i].jam,
+                                                  donaturID: trackingController.listRuteTerbaru.value?.data?[i].id,
+                                                  tanggal: updatedFDate,
+                                                ).then<Null>((bool value){
+                                                  trackingController.getRuteV2(tanggal: selectedDate.value, ruteID: wilayahID.value, type: selectedType.value).then((result){
+                                                    if(result){
+                                                      Get.snackbar("Berhasil", trackingController.responseMessage.value, backgroundColor: Colors.green, colorText: Colors.white);
+                                                      showDataTable(true);
+                                                    }else{
+                                                      Get.snackbar("Gagal", trackingController.responseMessage.value, backgroundColor: Colors.red, colorText: Colors.white);
+                                                      showDataTable(false);
+                                                    }
+                                                  });
+                                                });
+                                              }
+                                            },
+                                            child: Text(trackingController.listRuteTerbaru.value?.data?[i].tanggalPengambilan ?? "Kosong", style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),)))),
                 
                                           // INI AWAL
                                             DataCell(
                                             Obx(() => CupertinoButton(
                                                 padding: EdgeInsets.zero,
-                                                onPressed: trackingController.listRuteTerbaru.value?.data?[i].h2 == true ? (){
-                                                  Get.snackbar("Gagal", "Anda sudah mengirim notifikasi H-2 sebelumnya pada donatur", backgroundColor: Colors.red, colorText: Colors.white);
-                                                  } : (){
+                                                onPressed: (){
                                                   showAlertDialog(context, content: "Apakah anda yakin mengirim notifikasi status H-2 ke donatur ${trackingController.listRuteTerbaru.value?.data?[i].nama}?", title: "Kirim Notifikasi", onOK: () async {
                                                     Navigator.pop<Object?>(context);
                                                     await trackingController.postNotification(donaturID: trackingController.listRuteTerbaru.value?.data?[i].id, jadwaID: trackingController.listRuteTerbaru.value?.data?[i].jadwalID, type: 'h2').then((value){
                                                       if(value){
-                                                        Get.snackbar("Berhasil", "Berhasil mengirim notifikasi ke telegram ${trackingController.listRuteTerbaru.value?.data?[i].nama}", backgroundColor: Colors.green, colorText: Colors.white);
+                                                        Get.snackbar("Berhasil", "${trackingController.responseMessage.value} ${trackingController.listRuteTerbaru.value?.data?[i].nama}", backgroundColor: Colors.green, colorText: Colors.white);
                                                         trackingController.getRuteV2(tanggal: selectedDate.value, ruteID: wilayahController.wilayahModels.value?.data[selectedRuteIndex.value].id, type: selectedType.value).then((result){
                                                           if(result){
                                                             showDataTable(true);
@@ -494,7 +598,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                                                           }
                                                         });
                                                       }else{
-                                                        Get.snackbar("Gagal", "Gagal mengirim notifikasi ke telegram ${trackingController.listRuteTerbaru.value?.data?[i].nama}", backgroundColor: Colors.red, colorText: Colors.white);
+                                                        Get.snackbar("Gagal", trackingController.responseMessage.value, backgroundColor: Colors.red, colorText: Colors.white);
                                                       }
                                                     });
                                                   });
@@ -507,14 +611,12 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                                           DataCell(
                                             Obx(() => CupertinoButton(
                                                 padding: EdgeInsets.zero,
-                                                onPressed: trackingController.listRuteTerbaru.value?.data?[i].h1 == true ? (){
-                                                  Get.snackbar("Gagal", "Anda sudah mengirim notifikasi H-1 sebelumnya pada donatur", backgroundColor: Colors.red, colorText: Colors.white);
-                                                } : (){
+                                                onPressed: (){
                                                   showAlertDialog(context, content: "Apakah anda yakin mengirim notifikasi status H-1 ke donatur ${trackingController.listRuteTerbaru.value?.data?[i].nama}?", title: "Kirim Notifikasi", onOK: () async {
                                                     Navigator.pop(context);
                                                     await trackingController.postNotification(donaturID: trackingController.listRuteTerbaru.value?.data?[i].id, jadwaID: trackingController.listRuteTerbaru.value?.data?[i].jadwalID, type: 'h1').then((value){
                                                       if(value){
-                                                        Get.snackbar("Berhasil", "Berhasil mengirim notifikasi ke telegram ${trackingController.listRuteTerbaru.value?.data?[i].nama}", backgroundColor: Colors.green, colorText: Colors.white);
+                                                        Get.snackbar("Berhasil", "${trackingController.responseMessage.value} ${trackingController.listRuteTerbaru.value?.data?[i].nama}", backgroundColor: Colors.green, colorText: Colors.white);
                                                         trackingController.getRuteV2(tanggal: selectedDate.value, ruteID: wilayahController.wilayahModels.value?.data[selectedRuteIndex.value].id, type: selectedType.value).then((result){
                                                           if(result){
                                                             showDataTable(true);
@@ -523,7 +625,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                                                           }
                                                         });
                                                       }else{
-                                                        Get.snackbar("Gagal", "Gagal mengirim notifikasi ke telegram ${trackingController.listRuteTerbaru.value?.data?[i].nama}", backgroundColor: Colors.red, colorText: Colors.white);
+                                                        Get.snackbar("Gagal", trackingController.responseMessage.value, backgroundColor: Colors.red, colorText: Colors.white);
                                                       }
                                                     });
                                                   });
@@ -536,14 +638,12 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                                           DataCell(
                                             Obx(() => CupertinoButton(
                                                 padding: EdgeInsets.zero,
-                                                onPressed: trackingController.listRuteTerbaru.value?.data?[i].h == true ? (){
-                                                  Get.snackbar("Gagal", "Anda sudah mengirim notifikasi H sebelumnya pada donatur", backgroundColor: Colors.red, colorText: Colors.white);
-                                                } : () {
+                                                onPressed: () {
                                                   showAlertDialog(context, content: "Apakah anda yakin mengirim notifikasi status H ke donatur ${trackingController.listRuteTerbaru.value?.data?[i].nama}?", title: "Kirim Notifikasi", onOK: () async {
                                                     Navigator.pop(context);
                                                     await trackingController.postNotification(donaturID: trackingController.listRuteTerbaru.value?.data?[i].id, jadwaID: trackingController.listRuteTerbaru.value?.data?[i].jadwalID, type: 'h').then((value){
                                                       if(value){
-                                                        Get.snackbar("Berhasil", "Berhasil mengirim notifikasi ke telegram ${trackingController.listRuteTerbaru.value?.data?[i].nama}", backgroundColor: Colors.green, colorText: Colors.white);
+                                                        Get.snackbar("Berhasil", "${trackingController.responseMessage.value} ${trackingController.listRuteTerbaru.value?.data?[i].nama}", backgroundColor: Colors.green, colorText: Colors.white);
                                                         trackingController.getRuteV2(tanggal: selectedDate.value, ruteID: wilayahController.wilayahModels.value?.data[selectedRuteIndex.value].id, type: selectedType.value).then((result){
                                                           if(result){
                                                             showDataTable(true);
@@ -552,7 +652,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                                                           }
                                                         });
                                                       }else{
-                                                        Get.snackbar("Gagal", "${trackingController.responseMessage.value} ${trackingController.listRuteTerbaru.value?.data?[i].nama}", backgroundColor: Colors.red, colorText: Colors.white);
+                                                        Get.snackbar("Gagal", trackingController.responseMessage.value, backgroundColor: Colors.red, colorText: Colors.white);
                                                       }
                                                     });
                                                   });
@@ -565,14 +665,12 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                                           DataCell(
                                             Obx(() => CupertinoButton(
                                                 padding: EdgeInsets.zero,
-                                                onPressed: trackingController.listRuteTerbaru.value?.data?[i].rapel == true ? (){
-                                                    Get.snackbar("Gagal", "Anda sudah mengirim notifikasi Rapel sebelumnya pada donatur", backgroundColor: Colors.red, colorText: Colors.white);
-                                                  } : (){
+                                                onPressed: (){
                                                   showAlertDialog(context, content: "Apakah anda yakin mengirim notifikasi status Rapel ke donatur ${trackingController.listRuteTerbaru.value?.data?[i].nama}?", title: "Kirim Notifikasi", onOK: () async {
                                                     Navigator.pop(context);
                                                     await trackingController.postNotification(donaturID: trackingController.listRuteTerbaru.value?.data?[i].id, jadwaID: trackingController.listRuteTerbaru.value?.data?[i].jadwalID, type: 'rapel').then((value){
                                                       if(value){
-                                                        Get.snackbar("Berhasil", "Berhasil mengirim notifikasi ke telegram ${trackingController.listRuteTerbaru.value?.data?[i].nama}", backgroundColor: Colors.green, colorText: Colors.white);
+                                                        Get.snackbar("Berhasil", "${trackingController.responseMessage.value} ${trackingController.listRuteTerbaru.value?.data?[i].nama}", backgroundColor: Colors.green, colorText: Colors.white);
                                                         trackingController.getRuteV2(tanggal: selectedDate.value, ruteID: wilayahController.wilayahModels.value?.data[selectedRuteIndex.value].id, type: selectedType.value).then((result){
                                                           if(result){
                                                             showDataTable(true);
@@ -581,7 +679,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                                                           }
                                                         });
                                                       }else{
-                                                        Get.snackbar("Gagal", "Gagal mengirim notifikasi ke telegram ${trackingController.listRuteTerbaru.value?.data?[i].nama}", backgroundColor: Colors.red, colorText: Colors.white);
+                                                        Get.snackbar("Gagal", trackingController.responseMessage.value, backgroundColor: Colors.red, colorText: Colors.white);
                                                       }
                                                     });
                                                   });
@@ -594,14 +692,12 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                                           DataCell(
                                             Obx(() => CupertinoButton(
                                                 padding: EdgeInsets.zero,
-                                                onPressed: trackingController.listRuteTerbaru.value?.data?[i].jadwalRapel == true ? (){
-                                                    Get.snackbar("Gagal", "Anda sudah mengirim notifikasi Jadwal Rapel sebelumnya pada donatur", backgroundColor: Colors.red, colorText: Colors.white);
-                                                  } : (){
+                                                onPressed: (){
                                                   showAlertDialog(context, content: "Apakah anda yakin mengirim notifikasi status Konfirmasi Rapel ke donatur ${trackingController.listRuteTerbaru.value?.data?[i].nama}?", title: "Kirim Notifikasi", onOK: () async {
                                                     Navigator.pop<Object?>(context);
                                                     await trackingController.postNotification(donaturID: trackingController.listRuteTerbaru.value?.data?[i].id, jadwaID: trackingController.listRuteTerbaru.value?.data?[i].jadwalID, type: 'konfirmasi-rapel').then((value){
                                                       if(value){
-                                                        Get.snackbar("Berhasil", "Berhasil mengirim notifikasi ke telegram ${trackingController.listRuteTerbaru.value?.data?[i].nama}", backgroundColor: Colors.green, colorText: Colors.white);
+                                                        Get.snackbar("Berhasil", "${trackingController.responseMessage.value} ${trackingController.listRuteTerbaru.value?.data?[i].nama}", backgroundColor: Colors.green, colorText: Colors.white);
                                                         trackingController.getRuteV2(tanggal: selectedDate.value, ruteID: wilayahController.wilayahModels.value?.data[selectedRuteIndex.value].id, type: selectedType.value).then((result){
                                                           if(result){
                                                             showDataTable(true);
@@ -610,7 +706,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
                                                           }
                                                         });
                                                       }else{
-                                                        Get.snackbar("Gagal", "Gagal mengirim notifikasi ke telegram ${trackingController.listRuteTerbaru.value?.data?[i].nama}", backgroundColor: Colors.red, colorText: Colors.white);
+                                                        Get.snackbar("Gagal", trackingController.responseMessage.value, backgroundColor: Colors.red, colorText: Colors.white);
                                                       }
                                                     });
                                                   });
@@ -997,13 +1093,21 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
     );
   }
 
-  void showAlertDialog(BuildContext contex, {String? title, String? content, Function()? onOK}) {
+  void showAlertDialog(BuildContext contex, {String? title, String? content, Function()? onOK, bool? onlyOKButton}) {
     showCupertinoDialog<void>(
       context: context,
       builder: (BuildContext context) => CupertinoAlertDialog(
         title: Text(title ?? 'Akhiri'),
         content: Text(content ?? 'Apakah anda sudah mendatangi tempat dan menandai telah dihadiri?'),
-        actions: <CupertinoDialogAction>[
+        actions: onlyOKButton == true ? [
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: (){
+              Get.back();
+            },
+            child: const Text('Ya'),
+          ),
+        ] : <CupertinoDialogAction>[
           CupertinoDialogAction(
             isDefaultAction: true,
             onPressed: () {
@@ -1011,7 +1115,7 @@ class _DaftarLokasiTagihanv2State extends State<DaftarLokasiTagihanv2> {
             },
             child: const Text('Tidak'),
           ),
-          CupertinoDialogAction(
+            CupertinoDialogAction(
             isDestructiveAction: true,
             onPressed: onOK,
             child: const Text('Ya'),

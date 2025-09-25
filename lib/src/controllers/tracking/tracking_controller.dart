@@ -14,6 +14,7 @@ import 'package:http_parser/http_parser.dart';
 
 class TrackingController extends GetxController {
   RxBool isLoading = false.obs;
+  RxString responseMessages = "".obs;
   RxBool isLoadingUpdateTanggal = false.obs;
   RxString kodeKeberangkatan = "".obs;
   RxString responseMessage = "".obs;
@@ -69,12 +70,8 @@ class TrackingController extends GetxController {
       );
 
       var result = jsonDecode(response.body);
-      isLoading(false);
-      print(type);
       print(result);
-      print(tanggal);
-      print(ruteID);
-      print(authController.token.value);
+      isLoading(false);
       if (response.statusCode == 200) {
         if(result['success']) {
           listRuteTerbaru.value = ListRuteAfterAddedModels.fromJson(result);
@@ -267,6 +264,7 @@ class TrackingController extends GetxController {
       );
 
       var result = jsonDecode(response.body);
+      responseMessage(result['message']);
       isLoading(false);
       if (response.statusCode == 200) {
         if(result['success']) {
@@ -302,6 +300,7 @@ class TrackingController extends GetxController {
         },
       );
       var result = jsonDecode(response.body);
+      responseMessage(result['message']);
       isLoading(false);
       if (response.statusCode == 200) {
         if(result['success']) {
@@ -338,22 +337,21 @@ class TrackingController extends GetxController {
         },
       );
       var result = jsonDecode(response.body);
+      responseMessage(result['message']);
       print(result);
+      
       isLoading(false);
       if (response.statusCode == 200) {
-        if(result['success']) {
-          responseMessage.value = result['message'];
-          return true;
-        }
         responseMessage.value = result['message'];
-        return false;
+        return true;
       } else {
         responseMessage.value = result['message'];
         return false;
       }
     } catch (e) {
       isLoading(false);
-      responseMessage.value = e.toString();
+      responseMessage(e.toString());
+      print(e.toString());
       return false;
     }
   }
@@ -374,6 +372,7 @@ class TrackingController extends GetxController {
         },
       );
       var result = jsonDecode(response.body);
+      responseMessage(result['message']);
       print("Ini result ubahTanggalRapel => $result dengan donaturID => $donaturID dan userID => ${authController.token.value} dan tanggal => $tanggal");
       isLoading(false);
       if (response.statusCode == 200) {
@@ -444,6 +443,7 @@ class TrackingController extends GetxController {
         },
       );
       var result = jsonDecode(response.body);
+      responseMessage(result['message']);
       isLoading(false);
       if (response.statusCode == 200) {
         if(result['success']) {
@@ -527,6 +527,7 @@ class TrackingController extends GetxController {
       print(jadwalID);
       print(jsonEncode(perolehan));
       var result = jsonDecode(response.body);
+      responseMessage(result['message']);
       isLoading(false);
       if (response.statusCode == 200) {
         if(result['success']) {
@@ -557,6 +558,7 @@ class TrackingController extends GetxController {
       );
 
       var result = jsonDecode(response.body);
+      responseMessage(result['message']);
       isLoading(false);
       if (response.statusCode == 200) {
         if(result['success']) {
@@ -602,7 +604,7 @@ class TrackingController extends GetxController {
         },
         body: {
           'user': authController.token.value,
-          'kode': "ASB$kodeASB",
+          'kode': kodeASB,
           'nama': namaLengkap,
           'jenis_kelamin': gender == "Laki-laki" ? "L" : "P",
           'usia': usia,
@@ -617,6 +619,7 @@ class TrackingController extends GetxController {
         },
       );
       var result = jsonDecode(response.body);
+      responseMessage(result['message']);
       isLoading(false);
       if (response.statusCode == 200) {
         if(result['success']) {
@@ -647,6 +650,7 @@ class TrackingController extends GetxController {
       );
 
       var result = jsonDecode(response.body);
+      responseMessage(result['message']);
       isLoading(false);
       if (response.statusCode == 200) {
         if(result['success']) {
@@ -682,6 +686,7 @@ class TrackingController extends GetxController {
         },
       );
       var result = jsonDecode(response.body);
+      responseMessage(result['message']);
       isLoadingUpdateTanggal(false);
       if (response.statusCode == 200) {
         if(result['success']) {

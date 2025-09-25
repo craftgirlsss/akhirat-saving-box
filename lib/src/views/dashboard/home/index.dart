@@ -415,37 +415,39 @@ class _TimeDistribusiState extends State<TimeDistribusi> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Obx(() => locationController.isLoading.value ? const Text("Getting Location...", style: TextStyle(color: Colors.white60)) : Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text("Lokasi Anda", style: TextStyle(color: Colors.white60, fontSize: 14)),
-                                  Obx(() => Text(locationController.myLocationV2.value, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)))
-                                ],
-                              ),
-                              Obx(() => Text(locationController.myProvinsi.value, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)))
-                            ],
+                        Expanded(
+                          child: Obx(() => locationController.isLoading.value ? const Text("Getting Location...", style: TextStyle(color: Colors.white60)) : Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text("Lokasi Anda", style: TextStyle(color: Colors.white60, fontSize: 14)),
+                                    Obx(() => Text(locationController.myLocationV2.value, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)))
+                                  ],
+                                ),
+                                Obx(() => Text(locationController.myProvinsi.value, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)))
+                              ],
+                            ),
                           ),
                         ),
-                        Expanded(
-                          child: Column(
-                            children: [
-                              Expanded(child: Image.asset('assets/images/place.png')),
-                              Obx(() => CupertinoButton(
-                                  padding: EdgeInsets.zero,
-                                  onPressed: locationController.isLoading.value ? null : (){
-                                    locationController.getCurrentLocation();
-                                  },
-                                  child: Obx(() => locationController.isLoading.value ? const CupertinoActivityIndicator(color: Colors.white70) : const Icon(CupertinoIcons.refresh, size: 18, color: Colors.white70)), 
-                                ),
-                              )
-                            ],
-                          ),
-                        )
+                        Column(
+                          children: [
+                            // SizedBox(
+                            //   width: size.width / 6,
+                            //   child: Image.asset('assets/images/place.png')),
+                            Obx(() => CupertinoButton(
+                                padding: EdgeInsets.zero,
+                                onPressed: locationController.isLoading.value ? null : (){
+                                  locationController.getCurrentLocation();
+                                },
+                                child: Obx(() => locationController.isLoading.value ? const CupertinoActivityIndicator(color: Colors.white70) : const Icon(CupertinoIcons.refresh, size: 18, color: Colors.white70)), 
+                              ),
+                            )
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -557,9 +559,9 @@ class _TimeDistribusiState extends State<TimeDistribusi> {
                               Get.snackbar("Gagal", "Anda sudah melakukan cek keberangkatan untuk hari ini", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
                             }, name: "Selesai", urlImage: 'assets/images/done.png'),
                           ),
-                          itemShortcut(onPressed: (){
-                            Get.to(() => const DaftarDonaturView());
-                          }, name: "Tambah\nJadwal", urlImage: 'assets/images/add_jadwal.png'),
+                          // itemShortcut(onPressed: (){
+                          //   Get.to(() => const DaftarDonaturView());
+                          // }, name: "Tambah\nJadwal", urlImage: 'assets/images/add_jadwal.png'),
                           itemShortcut(onPressed: (){
                             Get.to(() => const GenerateKwitansiPage());
                           }, name: "Kuitansi", urlImage: 'assets/images/payment.png'),
@@ -723,8 +725,8 @@ class _DaftarDonaturViewState extends State<DaftarDonaturView> {
     super.initState();
     Future.delayed(Duration.zero, (){
       trackingController.getDaftarJadwal().then((bool result){
-        if(result){
-          startAnimation(true);
+        if(!result){
+          Get.snackbar("Gagal", trackingController.responseMessage.value);
         }
       });
     });
@@ -774,97 +776,113 @@ class _DaftarDonaturViewState extends State<DaftarDonaturView> {
             )
           ),
         ),
-        body: Obx(() {
-          if(searchResult.length < 1){
-            return RefreshIndicator(
-            onRefresh: () async {
-              trackingController.getDaftarJadwal();
-            },
-            backgroundColor: GlobalVariable.secondaryColor,
-            color: Colors.white,
-            child: Obx(() => trackingController.isLoading.value ? SizedBox(
-              width: size.width,
-              height: size.height,
-              child: const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(color: GlobalVariable.secondaryColor),
-                  SizedBox(height: 7),
-                  Text("Getting Data...")
-                ],
-              ),
-            ) : Obx(() => Scrollbar(
-              radius: const Radius.circular(10),
-              thickness: 8,
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Column(
-                  children: trackingController.listJadwalDonatur.value == null ? <Widget>[
-                    SizedBox(
-                      width: size.width,
-                      height: size.height / 1.2,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Image.asset('assets/images/no_data.png', width: size.width / 2),
-                          const Text("Tidak ada data"),
-                        ],
-                      )
-                    )
-                  ] : [
-                        Obx(() => ListView.builder(
-                            shrinkWrap: true,
-                            primary: false,
-                            itemCount: trackingController.listJadwalDonatur.value!.data.length,
-                            itemBuilder: (context, i) {
-                              return Obx(() =>  itemCardDonatur(
-                                  index: i,
-                                  size: size,
-                                  onPressed: trackingController.listJadwalDonatur.value?.data[i].status == "1" ? (){
-                                    dateTimePickerWidget(context, i);
-                                  } : (){
-                                    Get.snackbar("Gagal", "Donatur sudah ditambahkan ke jadwal pengambilan kaleng bulan ini", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
-                                  },
-                                  kode: trackingController.listJadwalDonatur.value?.data[i].kode,
-                                  name: trackingController.listJadwalDonatur.value?.data[i].nama,
-                                  status: trackingController.listJadwalDonatur.value?.data[i].status,
-                                  hari: trackingController.listJadwalDonatur.value?.data[i].hari,
-                                  jam: trackingController.listJadwalDonatur.value?.data[i].jam,
-                                  statusStr: trackingController.listJadwalDonatur.value?.data[i].statusStr
-                                ),
-                              );
-                            },
-                          ),
+        body: RefreshIndicator(
+          onRefresh: () async {
+            await trackingController.getDaftarJadwal().then((bool result){
+              if(!result){
+                Get.snackbar("Gagal", trackingController.responseMessage.value);
+              }
+            });
+          },
+          child: Obx(() {
+            if(searchResult.length < 1){
+              return RefreshIndicator(
+                onRefresh: () async {
+                  trackingController.getDaftarJadwal();
+                },
+              backgroundColor: GlobalVariable.secondaryColor,
+              color: Colors.white,
+              child: Obx(() => trackingController.isLoading.value ? SizedBox(
+                width: size.width,
+                height: size.height,
+                child: const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(color: GlobalVariable.secondaryColor),
+                    SizedBox(height: 7),
+                    Text("Getting Data...")
+                  ],
+                ),
+              ) : Obx(() => Scrollbar(
+                radius: const Radius.circular(10),
+                thickness: 8,
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    await trackingController.getDaftarJadwal().then((bool result){
+                      if(!result){
+                        Get.snackbar("Gagal", trackingController.responseMessage.value);
+                      }
+                    });
+                  },
+                  child: ListView(
+                    shrinkWrap: true,
+                      children: trackingController.listJadwalDonatur.value == null ? <Widget>[
+                        SizedBox(
+                          width: size.width,
+                          height: size.height / 1.2,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Image.asset('assets/images/no_data.png', width: size.width / 2),
+                              const Text("Tidak ada data"),
+                            ],
+                          )
                         )
-                      ],
-                    ),
+                      ] : [
+                            Obx(() => ListView.builder(
+                              shrinkWrap: true,
+                              primary: false,
+                              itemCount: trackingController.listJadwalDonatur.value!.data.length,
+                              itemBuilder: (context, i) {
+                                return Obx(() =>  itemCardDonatur(
+                                    size,
+                                    index: i,
+                                    onPressed: trackingController.listJadwalDonatur.value?.data[i].status == "1" ? (){
+                                      dateTimePickerWidget(context, i);
+                                    } : (){
+                                      Get.snackbar("Gagal", "Donatur sudah ditambahkan ke jadwal pengambilan kaleng bulan ini", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
+                                    },
+                                    kode: trackingController.listJadwalDonatur.value?.data[i].kode,
+                                    name: trackingController.listJadwalDonatur.value?.data[i].nama,
+                                    status: trackingController.listJadwalDonatur.value?.data[i].status,
+                                    hari: trackingController.listJadwalDonatur.value?.data[i].hari,
+                                    jam: trackingController.listJadwalDonatur.value?.data[i].jam,
+                                    statusStr: trackingController.listJadwalDonatur.value?.data[i].statusStr
+                                  ),
+                                );
+                              },
+                            ),
+                          )
+                        ],
+                      ),
+                ),
                   ),
                 ),
               ),
-            ),
-          );}
-          return Obx(() => trackingController.isLoading.value ? const SizedBox() : SingleChildScrollView(
-              child: Column(
-                children: List.generate(searchResult.length, (i){
-                  return 
-                  itemCardDonatur(
-                    onPressed: (){
-                      dateTimePickerWidgetSearched(context, i);
-                    },
-                    kode: searchResult[i].kode,
-                    name: searchResult[i].nama,
-                    status: searchResult[i].status,
-                    hari: searchResult[i].hari,
-                    jam: searchResult[i].jam,
-                    statusStr: searchResult[i].statusStr
-                 );
-                }),
-              ),
-              ),
-          );
-          }
+            );}
+            return Obx(() => trackingController.isLoading.value ? const SizedBox() : ListView(
+              shrinkWrap: true,
+                  children: List.generate(searchResult.length, (i){
+                    return 
+                    itemCardDonatur(
+                      size,
+                      onPressed: (){
+                        dateTimePickerWidgetSearched(context, i);
+                      },
+                      kode: searchResult[i].kode,
+                      name: searchResult[i].nama,
+                      status: searchResult[i].status,
+                      hari: searchResult[i].hari,
+                      jam: searchResult[i].jam,
+                      statusStr: searchResult[i].statusStr
+                   );
+                  }),
+                ),
+              );
+            }
+          ),
         ),
       ),
     );
@@ -924,71 +942,67 @@ class _DaftarDonaturViewState extends State<DaftarDonaturView> {
     );
   }
 
-  CupertinoButton itemCardDonatur({Function()? onPressed, String? name, String? status, String? kode, String? jam, String? hari, String? statusStr, Size? size, int? index}){
+  CupertinoButton itemCardDonatur(Size size, {Function()? onPressed, String? name, String? status, String? kode, String? jam, String? hari, String? statusStr, int? index}){
     return CupertinoButton(
       onPressed: onPressed,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-      child: Obx(() => AnimatedContainer(
-          duration: Duration(milliseconds: 400 + (index! * 100)),
-          transform: Matrix4.translationValues(startAnimation.value ? 0 : size!.width, 0, 0),
-          curve: Curves.easeInOut,
-          padding: const EdgeInsets.all(13),
-          decoration: BoxDecoration(
-            color: const Color.fromRGBO(96, 81, 196, 1),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.black12),
-            boxShadow: const [
-              BoxShadow(color: Colors.black38, blurRadius: 8, offset: Offset(1, 2))
-            ],
-            gradient: LinearGradient(
-              colors: hari != null || jam != null ? const [
-                Color.fromRGBO(81, 196, 127, 1),
-                Color.fromARGB(255, 55, 133, 107),
-              ] : const [
-                Color.fromRGBO(96, 81, 196, 1),
-                Color.fromARGB(255, 65, 55, 133),
-              ]
+      child: Container(
+        padding: const EdgeInsets.all(13),
+        decoration: BoxDecoration(
+          color: const Color.fromRGBO(96, 81, 196, 1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.black12),
+          boxShadow: const [
+            BoxShadow(color: Colors.black38, blurRadius: 8, offset: Offset(1, 2))
+          ],
+          gradient: LinearGradient(
+            colors: hari != null || jam != null ? const [
+              Color.fromRGBO(81, 196, 127, 1),
+              Color.fromARGB(255, 55, 133, 107),
+            ] : const [
+              Color.fromRGBO(96, 81, 196, 1),
+              Color.fromARGB(255, 65, 55, 133),
+            ]
+          )
+        ),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(child: Text(name ?? "Tidak ada nama", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white), maxLines: 2)),
+                Text(kode ?? "ASB0000", style: const TextStyle(fontSize: 14, color: Colors.white60), maxLines: 1),
+              ],  
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                const Icon(Clarity.clock_line, color: Colors.white60, size: 18),
+                const SizedBox(width: 5),
+                Text(hari ?? "Hari Kosong", style: const TextStyle(fontSize: 14, color: Colors.white60), maxLines: 1),
+                const SizedBox(width: 5),
+                const Text("-", style: TextStyle(fontSize: 14, color: Colors.white60)),
+                const SizedBox(width: 5),
+                Text("Pukul ${jam ?? '00:00 AM/PM'}", style: const TextStyle(fontSize: 14, color: Colors.white60), maxLines: 1)
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if(status == "1")
+                  const Icon(Icons.circle, size: 14, color: Colors.green)
+                else if(status == "2" || status == "3")
+                  const Icon(Icons.circle, size: 14, color: Colors.yellow)
+                else if(status == "5")
+                  const Icon(Icons.circle, size: 14, color: Colors.blue)
+                else
+                  const Icon(Icons.circle, size: 14, color: Colors.red),
+                const SizedBox(width: 5),
+                Text(statusStr ?? "Status 404", style: const TextStyle(fontSize: 14, color: Colors.white60))
+              ],
             )
-          ),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(child: Text(name ?? "Tidak ada nama", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white), maxLines: 2)),
-                  Text(kode ?? "ASB0000", style: const TextStyle(fontSize: 14, color: Colors.white60), maxLines: 1),
-                ],  
-              ),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  const Icon(Clarity.clock_line, color: Colors.white60, size: 18),
-                  const SizedBox(width: 5),
-                  Text(hari ?? "Hari Kosong", style: const TextStyle(fontSize: 14, color: Colors.white60), maxLines: 1),
-                  const SizedBox(width: 5),
-                  const Text("-", style: TextStyle(fontSize: 14, color: Colors.white60)),
-                  const SizedBox(width: 5),
-                  Text("Pukul ${jam ?? '00:00 AM/PM'}", style: const TextStyle(fontSize: 14, color: Colors.white60), maxLines: 1)
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  if(status == "1")
-                    const Icon(Icons.circle, size: 14, color: Colors.green)
-                  else if(status == "2" || status == "3")
-                    const Icon(Icons.circle, size: 14, color: Colors.yellow)
-                  else if(status == "5")
-                    const Icon(Icons.circle, size: 14, color: Colors.blue)
-                  else
-                    const Icon(Icons.circle, size: 14, color: Colors.red),
-                  const SizedBox(width: 5),
-                  Text(statusStr ?? "Status 404", style: const TextStyle(fontSize: 14, color: Colors.white60))
-                ],
-              )
-            ],
-          ),
+          ],
         ),
       ),
     );

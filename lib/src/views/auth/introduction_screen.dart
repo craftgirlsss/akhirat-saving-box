@@ -1,7 +1,6 @@
 // import 'package:asb_app/src/controllers/utilities/notification_handler.dart';
 // import 'package:asb_app/src/controllers/utilities/permission_handlers.dart';
 // import 'package:asb_app/src/views/auth/forgot.dart';
-import 'package:asb_app/src/controllers/utilities/notification_handler.dart';
 import 'package:asb_app/src/controllers/utilities/permission_handlers.dart';
 import 'package:asb_app/src/views/dashboard/home/donatur.dart';
 import 'package:auto_size_text/auto_size_text.dart';
@@ -26,7 +25,8 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
   @override
   void initState() {
     super.initState();
-    FirebaseApi().initNotifications().then((value) => permissionsHandler());
+    permissionsHandler();
+    // FirebaseApi().initNotifications().then((value) => permissionsHandler());
   }
 
   @override

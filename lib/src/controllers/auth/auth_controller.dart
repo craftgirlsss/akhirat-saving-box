@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 class AuthController extends GetxController{
   var isLoading = false.obs;
   RxString token = "".obs;
+  RxString kodeKeberangkatan = "".obs;
   RxString responseMessage = "".obs;
   Rxn<ProfileModels> profileModels = Rxn<ProfileModels>();
 

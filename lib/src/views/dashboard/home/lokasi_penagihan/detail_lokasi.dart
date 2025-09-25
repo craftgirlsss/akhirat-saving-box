@@ -177,7 +177,7 @@ class _DetailLokasiState extends State<DetailLokasi> with TickerProviderStateMix
                       children: [
                         TileLayer(
                           urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                          userAgentPackageName: 'com.example.app',
+                          userAgentPackageName: 'com.asb.app',
                           maxNativeZoom: 19,
                           retinaMode: true,
                         ),
@@ -393,7 +393,6 @@ class _DetailLokasiState extends State<DetailLokasi> with TickerProviderStateMix
                                         height: size.height /1.2,
                                         decoration: BoxDecoration(
                                           color: Colors.white,
-                                          border: Border.all(color: Colors.black45),
                                           borderRadius: BorderRadius.circular(15),
                                         ),
                                         child: imageProofList.isEmpty ? Center(
@@ -494,32 +493,36 @@ class _DetailLokasiState extends State<DetailLokasi> with TickerProviderStateMix
                                                   )
                                                 ],
                                               ),
-                                              Obx(() => CupertinoButton(
-                                                color: GlobalVariable.secondaryColor, 
-                                                onPressed: trackingController.isLoading.value ? null : () async {
-                                                  await locationController.getCurrentLocation().then((result) {
-                                                    trackingController.selesaiAmbil(
-                                                      jadwalID: widget.jadwaID,
-                                                      catatanKhusus: catatanKhusus.text,
-                                                      photos: imageProofList,
-                                                      lat: locationController.myLatitude.value,
-                                                      long: locationController.myLongitude.value,
-                                                    ).then((result) {
-                                                      if(result){
-                                                        imageProofList.value = [];
-                                                        catatanKhusus.clear();
-                                                        status('3');
-                                                        alertSuccess(context, title: "Berhasil", content: "Berhasil uplaod foto bukti pengambilan kotak", onOK: (){
-                                                          Navigator.of(context)..pop()..pop();
-                                                        });
-                                                      }else{
-                                                        Get.snackbar("Gagal", trackingController.responseMessage.value, backgroundColor: Colors.red, colorText: Colors.white);
-                                                      }
+                                              Obx(() => SizedBox(
+                                                width: size.width,
+                                                child: CupertinoButton(
+                                                  color: GlobalVariable.secondaryColor, 
+                                                  onPressed: trackingController.isLoading.value ? null : () async {
+                                                    print(widget.jadwaID);
+                                                    await locationController.getCurrentLocation().then((result) {
+                                                      trackingController.selesaiAmbil(
+                                                        jadwalID: widget.jadwaID,
+                                                        catatanKhusus: catatanKhusus.text,
+                                                        photos: imageProofList,
+                                                        lat: locationController.myLatitude.value,
+                                                        long: locationController.myLongitude.value,
+                                                      ).then((result) {
+                                                        if(result){
+                                                          imageProofList.value = [];
+                                                          catatanKhusus.clear();
+                                                          status('3');
+                                                          alertSuccess(context, title: "Berhasil", content: "Berhasil uplaod foto bukti pengambilan kotak", onOK: (){
+                                                            Navigator.of(context)..pop()..pop();
+                                                          });
+                                                        }else{
+                                                          Get.snackbar("Gagal", trackingController.responseMessage.value, backgroundColor: Colors.red, colorText: Colors.white);
+                                                        }
+                                                      });
                                                     });
-                                                  });
-                                                },
-                                                child: Obx(() => trackingController.isLoading.value || locationController.isLoading.value ? const CupertinoActivityIndicator() : const Text("Submit")), 
-                                                ),
+                                                  },
+                                                  child: Obx(() => trackingController.isLoading.value || locationController.isLoading.value ? const CupertinoActivityIndicator(color: Colors.white) : const Text("Submit", style: TextStyle(color: Colors.white))), 
+                                                  ),
+                                              ),
                                               )
                                             ],
                                           ),

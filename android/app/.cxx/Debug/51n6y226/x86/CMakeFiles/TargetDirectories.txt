@@ -1,0 +1,2 @@
+/Users/putramac/Documents/Projects/Flutter-Project/asb_app/android/app/.cxx/Debug/51n6y226/x86/CMakeFiles/edit_cache.dir
+/Users/putramac/Documents/Projects/Flutter-Project/asb_app/android/app/.cxx/Debug/51n6y226/x86/CMakeFiles/rebuild_cache.dir

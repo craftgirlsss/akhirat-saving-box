@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:asb_app/src/components/global/index.dart';
 import 'package:asb_app/src/controllers/auth/auth_controller.dart';
+import 'package:asb_app/src/models/daftar_pengurus_asb.dart';
 import 'package:asb_app/src/models/detail_donatur_finnished.dart';
 import 'package:asb_app/src/models/donatur_finnished.dart';
 import 'package:asb_app/src/models/donatur_models.dart';
@@ -30,6 +31,7 @@ class WilayahController extends GetxController{
   Rxn<DonaturFinnished> donaturFinnishedModels = Rxn<DonaturFinnished>();
   Rxn<DetailDonaturFinnished> detailDonaturFinnish = Rxn<DetailDonaturFinnished>();
   Rxn<LokasiDonaturModels> lokasiDonaturModels = Rxn<LokasiDonaturModels>();
+  Rxn<DaftarPengurusModels> pengurusModels = Rxn<DaftarPengurusModels>();
 
   Future<bool> getWilayah() async {
     try {
@@ -46,6 +48,37 @@ class WilayahController extends GetxController{
       if (response.statusCode == 200) {
         if(result['success']) {
           wilayahModels.value = WilayahModels.fromJson(result);
+          responseString.value = result['message'];
+          return true;
+        }
+        responseString.value = result['message'];
+        return false;
+      } else {
+        responseString.value = result['message'];
+        return false;
+      }
+    } catch (e) {
+      isLoading(false);
+      responseString.value = e.toString();
+      return false;
+    }
+  }
+
+  Future<bool> getPengurus() async {
+    try {
+      isLoading(true);
+      http.Response response = await http.get(
+        Uri.tryParse("${GlobalVariable.mainURL}/nama-pengurus?user=${authController.token.value}")!,
+        headers: {
+          'x-api-key': GlobalVariable.apiKey,
+        }
+      );
+
+      var result = jsonDecode(response.body);
+      isLoading(false);
+      if (response.statusCode == 200) {
+        if(result['success']) {
+          pengurusModels.value = DaftarPengurusModels.fromJson(result);
           responseString.value = result['message'];
           return true;
         }
@@ -244,7 +277,7 @@ class WilayahController extends GetxController{
   }
 
   // generate Kwitansi
-  Future<bool> generateKwitansi({String? jadwalID, String? terbilang}) async {
+  Future<bool> generateKwitansi({String? jadwalID, String? terbilang, String? pengurusID}) async {
     try {
       isLoading(true);
       http.Response response = await http.post(
@@ -255,17 +288,18 @@ class WilayahController extends GetxController{
         body: {
           'user': authController.token.value,
           'jadwal': jadwalID,
-          'terbilang': terbilang
+          'terbilang': terbilang,
+          'pengurus' : pengurusID
         },
       );
       var result = jsonDecode(response.body);
-      print(result);
+      if(kDebugMode) print(result);
       isLoading(false);
       if (response.statusCode == 200) {
         if(result['success']) {
           responseString.value = result['message'];
           urlPDFGenerated.value = result['data']['url'];
-          print("ini URLPDFGenerated => ${urlPDFGenerated.value}");
+          if(kDebugMode) print("ini URLPDFGenerated => ${urlPDFGenerated.value}");
           fileName(result['data']['filename']);
           return true;
         }
@@ -276,7 +310,7 @@ class WilayahController extends GetxController{
         return false;
       }
     } catch (e) {
-      print("Masuk ke e karena $e");
+      if(kDebugMode) print("Masuk ke e karena $e");
       isLoading(false);
       responseString.value = e.toString();
       return false;
@@ -285,7 +319,7 @@ class WilayahController extends GetxController{
 
 
   // generate Kwitansi Manual
-  Future<bool> generateKwitansiManual({String? name, String? program, String? jumlah}) async {
+  Future<bool> generateKwitansiManual({String? name, String? program, String? jumlah, String? pengurusID}) async {
     try {
       isLoading(true);
       http.Response response = await http.post(
@@ -297,7 +331,8 @@ class WilayahController extends GetxController{
           'user': authController.token.value,
           'donatur': name,
           'program': program,
-          'jumlah': jumlah
+          'jumlah': jumlah,
+          'pengurus' : pengurusID
         },
       );
       var result = jsonDecode(response.body);

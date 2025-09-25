@@ -7,6 +7,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -23,6 +24,7 @@ class _TambahDonaturPageState extends State<TambahDonaturPage> {
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
+        backgroundColor: Colors.white,
         appBar: AppBar(
           forceMaterialTransparency: true,
           leading: IconButton(
@@ -40,7 +42,6 @@ class _TambahDonaturPageState extends State<TambahDonaturPage> {
     );
   }
 }
-
 
 class StepperView extends StatefulWidget {
   const StepperView({super.key});
@@ -89,6 +90,9 @@ class _StepperViewState extends State<StepperView> {
   WilayahController wilayahController = Get.put(WilayahController());
   LocationController locationController = Get.find();
   TrackingController trackingController = Get.put(TrackingController());
+  TextEditingController proviceController = TextEditingController();
+  TextEditingController kabupatenController = TextEditingController();
+  TextEditingController kecamatanController = TextEditingController();
   TextEditingController kodeASB = TextEditingController();
   TextEditingController namaLengkap = TextEditingController();
   TextEditingController alamat = TextEditingController();
@@ -96,20 +100,36 @@ class _StepperViewState extends State<StepperView> {
   TextEditingController usia = TextEditingController();
   TextEditingController lat = TextEditingController();
   TextEditingController long = TextEditingController();
+  final List<String> provinsiList = List.generate(50, (index) => 'Provinsi ${index + 1}');
+  
+  RxString selectedProvinsi = "".obs;
+  RxString selectedKabupaten = "".obs;
+  RxString selectedKecamatan = "".obs;
+  RxString selectedDesa = "".obs;
+  final formKey = GlobalKey<FormState>();
 
+  
   MapController mapController = MapController();
 
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 1), (){
-      wilayahController.getWilayah();
+    Future.delayed(const Duration(seconds: 1), () async {
+      wilayahController.getWilayah().then((result){
+        if(result){
+          selectedWilayahString(wilayahController.wilayahModels.value!.data[0].nama);
+          selectedWilayahID(wilayahController.wilayahModels.value!.data[0].id);
+        }
+      });
       wilayahController.getProvince();
     });
   }
 
   @override
   void dispose() {
+    proviceController.dispose();
+    kabupatenController.dispose();
+    kecamatanController.dispose();
     namaLengkap.dispose();
     kodeASB.dispose();
     alamat.dispose();
@@ -119,6 +139,7 @@ class _StepperViewState extends State<StepperView> {
     long.dispose();
     super.dispose();
   }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -128,103 +149,103 @@ class _StepperViewState extends State<StepperView> {
           return Padding(
             padding: const EdgeInsets.only(top: 16.0),
             child: Row(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                _index.value == 0 ? const SizedBox() : ElevatedButton.icon(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  label: const Text('Kembali', style: TextStyle(color: Colors.white)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: CupertinoColors.systemRed
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  _index.value == 0 ? const SizedBox() : ElevatedButton.icon(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    label: const Text('Kembali', style: TextStyle(color: Colors.white)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: CupertinoColors.systemRed
+                    ),
+                    onPressed: (){
+                      if (_index > 0) {
+                        _index.value -= 1;
+                      }
+                    },
                   ),
-                  onPressed: (){
-                    if (_index > 0) {
-                      _index.value -= 1;
-                    }
-                  },
-                ),
-                _index.value == 1 ? 
-                  Obx(() => ElevatedButton.icon(
-                      onPressed: trackingController.isLoading.value ? null : () async {
-                        await trackingController.tambahDonaturAPI(
-                          province: selectedProvinsiString.value,
-                          kabupaten: selectedKabupatenString.value,
-                          kecamatan: selectedKecamatanString.value,
-                          wilayahID: selectedWilayahID.value,
-                          programID: selectedProgramID.value,
-                          kodeASB: kodeASB.text,
-                          namaLengkap: namaLengkap.text,
-                          gender: selectedGenderString.value,
-                          usia: usia.text,
-                          noHP: phone.text,
-                          alamat: alamat.text,
-                          lat: latitudeSelected.value,
-                          long: longitudeSelected.value,
-                        ).then((result) {
-                          if(result){
-                            //Reset variable
-                            selectedWilayahID("");
-                            selectedWilayahString("");
-                            selectedWilayahIndex(0);
-                            selectedProvinsiString("");
-                            selectedProvinsiID("");
-                            selectedProvinceIndex(0);
-                            selectedKabupatenID("");
-                            selectedKabupatenIndex(0);
-                            selectedKabupatenString("");
-                            selectedKecamatanString("");
-                            selectedKecamatanIndex(0);
-                            _index(0);
-                            selectedProgramID("");
-                            selectedProgramIndex(0);
-                            selectedProgramString("");
-                            selectedGenderString("");
-                            latitudeSelected(0.0);
-                            longitudeSelected(0.0);
-                            Get.snackbar("Berhasil", "Berhasil menambah doantur", backgroundColor: Colors.green, colorText: Colors.white);
-                            Future.delayed(const Duration(seconds: 2), () => Get.back());
+                  _index.value == 1 ? 
+                    Obx(() => ElevatedButton.icon(
+                        onPressed: trackingController.isLoading.value ? null : () async {
+                          await trackingController.tambahDonaturAPI(
+                            province: proviceController.text,
+                            kabupaten: kabupatenController.text,
+                            kecamatan: kecamatanController.text,
+                            wilayahID: selectedWilayahID.value,
+                            programID: selectedProgramID.value,
+                            kodeASB: kodeASB.text,
+                            namaLengkap: namaLengkap.text,
+                            gender: selectedGenderString.value,
+                            usia: usia.text,
+                            noHP: phone.text,
+                            alamat: alamat.text,
+                            lat: latitudeSelected.value,
+                            long: longitudeSelected.value,
+                          ).then((result) {
+                            if(result){
+                              //Reset variable
+                              selectedWilayahID("");
+                              selectedWilayahString("");
+                              selectedWilayahIndex(0);
+                              selectedProvinsiString("");
+                              selectedProvinsiID("");
+                              selectedProvinceIndex(0);
+                              selectedKabupatenID("");
+                              selectedKabupatenIndex(0);
+                              selectedKabupatenString("");
+                              selectedKecamatanString("");
+                              selectedKecamatanIndex(0);
+                              _index(0);
+                              selectedProgramID("");
+                              selectedProgramIndex(0);
+                              selectedProgramString("");
+                              selectedGenderString("");
+                              latitudeSelected(0.0);
+                              longitudeSelected(0.0);
+                              Get.snackbar("Berhasil", "Berhasil menambah doantur", backgroundColor: Colors.green, colorText: Colors.white);
+                              Future.delayed(const Duration(seconds: 2), () => Get.back());
+                            }else{
+                              Get.snackbar("Gagal", trackingController.responseMessage.value, backgroundColor: Colors.red, colorText: Colors.white);
+                            }
+                          });
+                        },
+                        iconAlignment: IconAlignment.end,
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.only(right: 8, left: 15),
+                          backgroundColor: CupertinoColors.activeGreen
+                        ),
+                        icon: Obx(() => trackingController.isLoading.value ? const SizedBox() : const Icon(CupertinoIcons.check_mark, color: CupertinoColors.white)),
+                        label: Obx(() => trackingController.isLoading.value ? const CupertinoActivityIndicator(color: Colors.black54) : const Text('Simpan', style: TextStyle(color: CupertinoColors.white))),
+                      ),
+                    )
+                  : ElevatedButton.icon(
+                      onPressed: (){
+                        if (_index.value <= 0) {
+                          if(proviceController.text == "" && kabupatenController.text == "" && kabupatenController.text == ""){
+                            Get.snackbar("Gagal", "Mohon isi semua terlebih dahulu form area pada step 1", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
                           }else{
-                            Get.snackbar("Gagal", trackingController.responseMessage.value, backgroundColor: Colors.red, colorText: Colors.white);
+                            _index.value += 1;
+                            if(_index.value == 1){
+                              wilayahController.getProgram();
+                            }
                           }
-                        });
+                        }
                       },
                       iconAlignment: IconAlignment.end,
+                      icon: const Icon(Icons.arrow_forward_rounded, color: CupertinoColors.white),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.only(right: 8, left: 15),
                         backgroundColor: CupertinoColors.activeGreen
                       ),
-                      icon: Obx(() => trackingController.isLoading.value ? const SizedBox() : const Icon(CupertinoIcons.check_mark, color: CupertinoColors.white)),
-                      label: Obx(() => trackingController.isLoading.value ? const CupertinoActivityIndicator(color: Colors.black54) : const Text('Simpan', style: TextStyle(color: CupertinoColors.white))),
+                      label: const Text('Lanjut', style: TextStyle(color: CupertinoColors.white)),
                     ),
-                  )
-                : ElevatedButton.icon(
-                    onPressed: (){
-                      if (_index.value <= 0) {
-                        if(selectedKecamatanString.value == ""){
-                          Get.snackbar("Gagal", "Mohon isi semua terlebih dahulu form area pada step 1", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
-                        }else{
-                          _index.value += 1;
-                          if(_index.value == 1){
-                            wilayahController.getProgram();
-                          }
-                        }
-                      }
-                    },
-                    iconAlignment: IconAlignment.end,
-                    icon: const Icon(Icons.arrow_forward_rounded, color: CupertinoColors.white),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.only(right: 8, left: 15),
-                      backgroundColor: CupertinoColors.activeGreen
-                    ),
-                    label: const Text('Lanjut', style: TextStyle(color: CupertinoColors.white)),
-                  ),
-              ],
-            ),
+                ],
+              ),
           );
         },
         currentStep: _index.value,
         onStepTapped: (int index) {
-          if(selectedKecamatanString.value == ""){
+          if(proviceController.text == "" && kabupatenController.text == "" && kabupatenController.text == ""){
             Get.snackbar("Gagal", "Mohon isi semua terlebih dahulu form area pada step 1", backgroundColor: GlobalVariable.secondaryColor, colorText: Colors.white);
           }else{
             _index.value = index;
@@ -239,17 +260,83 @@ class _StepperViewState extends State<StepperView> {
               list: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Expanded(child: dropdownPickerWilayahArea(name: "Pilih Wilayah/Area", enable: true)),
-                    Expanded(child: dropdownPickerProvinsi(name: "Pilih Provinsi", enable: wilayahController.wilayahModels.value != null ? true : false)),
+                    const SizedBox(width: 5.0),
+                    Expanded(
+                      child: SizedBox(
+                        height: 35,
+                        child: TextFormField(
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Field tidak boleh kosong';
+                            }
+                            return null;
+                          },
+                          controller: proviceController,
+                          decoration: const InputDecoration(
+                            isDense: true,
+                            hintText: "Input Provinsi",
+                            contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                            border: OutlineInputBorder(borderSide: BorderSide(color: Colors.black12, width: 0.1)),
+                          ),
+                          style: GoogleFonts.inter(fontSize: 14),
+                        ),
+                      ),
+                    ),
+                    // Expanded(child: dropdownPickerProvinsi(name: "Pilih Provinsi", enable: wilayahController.wilayahModels.value != null ? true : false)),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(child: Obx(() => dropdownPickerKabupaten(name: "Pilih Kabupaten", enable: selectedProvinsiString.value != "" ? true : false))),
-                    Expanded(child: Obx(() => dropdownPickerKecamatan(name: "Pilih Kecamatan", enable: selectedKabupatenString.value != "" ? true : false)))
+                    Expanded(
+                      child: SizedBox(
+                        height: 35,
+                        child: TextFormField(
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Field tidak boleh kosong';
+                            }
+                            return null;
+                          },
+                          controller: kabupatenController,
+                          decoration: const InputDecoration(
+                            isDense: true,
+                            hintText: "Input Kabupaten",
+                            contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                            border: OutlineInputBorder(borderSide: BorderSide(color: Colors.black12, width: 0.1)),
+                          ),
+                          style: GoogleFonts.inter(fontSize: 14),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 5.0),
+                    Expanded(
+                      child: SizedBox(
+                        height: 35,
+                        child: TextFormField(
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Field tidak boleh kosong';
+                            }
+                            return null;
+                          },
+                          controller: kecamatanController,
+                          decoration: const InputDecoration(
+                            isDense: true,
+                            hintText: "Input Kecamatan",
+                            contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                            border: OutlineInputBorder(borderSide: BorderSide(color: Colors.black12, width: 0.1)),
+                          ),
+                          style: GoogleFonts.inter(fontSize: 14),
+                        ),
+                      ),
+                    ),
+                    // Expanded(child: Obx(() => dropdownPickerKabupaten(name: "Pilih Kabupaten", enable: selectedProvinsiString.value != "" ? true : false))),
+                    // Expanded(child: Obx(() => dropdownPickerKecamatan(name: "Pilih Kecamatan", enable: selectedKabupatenString.value != "" ? true : false)))
                   ],
                 ),
               ],
@@ -263,7 +350,7 @@ class _StepperViewState extends State<StepperView> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(child: dropdownPickerProgram(name: "Pilih Program", enable: selectedKecamatanString.value != "" ? true : false)),
+                    Expanded(child: dropdownPickerProgram(name: "Pilih Program", enable: proviceController.text != "" ? true : false)),
                     Expanded(child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -273,11 +360,10 @@ class _StepperViewState extends State<StepperView> {
                           height: 36,
                           child: TextField(
                             controller: kodeASB,
-                            keyboardType: TextInputType.number,
+                            keyboardType: TextInputType.name,
                             style: const TextStyle(fontSize: 14),
                             decoration: InputDecoration(
                               // prefix: const Text("ASB"),
-                              prefixText: "ASB",
                               hintText: "Tulis Kode Donatur",
                               hintStyle: const TextStyle(color: Colors.black26),
                               contentPadding: const EdgeInsets.all(5),
@@ -424,7 +510,7 @@ class _StepperViewState extends State<StepperView> {
                     Expanded(child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(" Alamat", style: TextStyle(fontSize: 14, color: Colors.black38)),
+                        const Text(" Alamat Lengkap", style: TextStyle(fontSize: 14, color: Colors.black38)),
                         const SizedBox(height: 2),
                         SizedBox(
                           height: 36,
@@ -556,7 +642,7 @@ class _StepperViewState extends State<StepperView> {
                       children: [
                         TileLayer(
                           urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                          userAgentPackageName: 'com.example.app',
+                          userAgentPackageName: 'com.asb.app',
                           maxNativeZoom: 19,
                           retinaMode: true,
                         ),
@@ -613,13 +699,13 @@ class _StepperViewState extends State<StepperView> {
       ),
     );
   }
-
-  // DropDown untuk pilihan lokasi Wilayah Area
+    
   Obx dropdownPickerWilayahArea({String? name, bool? enable}){
-    RxList<String> listData = <String>['Cari'].obs;
+    RxList<String> listData = <String>['Cari Rute'].obs;
     return Obx(() => CupertinoButton(
         padding: EdgeInsets.zero,
-        onPressed: isLoading.value ? (){} : enable == false ? null : () => _showDialog(
+        onPressed: isLoading.value ? (){} : enable == false ? null : () => 
+        _showDialog(
           CupertinoPicker(
             magnification: 1.5,
             squeeze: 1.3,
@@ -661,9 +747,8 @@ class _StepperViewState extends State<StepperView> {
             ),
           ],
         ),
-      ),
-    );
-  }
+      ),);
+    }
   
   // DropDown untuk pilihan lokasi Provinsi
   Obx dropdownPickerProvinsi({String? name, bool? enable}){
@@ -692,7 +777,7 @@ class _StepperViewState extends State<StepperView> {
             },
             children: wilayahController.provinceModels.value != null ? wilayahController.provinceModels.value!.rajaongkir.results.map((name) => Text(name.province)).toList() : [Text(listData[0])],
           ),
-        ),
+        ), 
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -718,6 +803,30 @@ class _StepperViewState extends State<StepperView> {
       ),
     );
   }
+
+  // Obx dropdownPickerProvinsi({String? name, bool? enable}){
+  //   return Obx(() => Column(
+  //     children: [
+  //       Text("Provinsi"),
+  //       DropdownButton(
+  //         padding: EdgeInsets.zero,
+  //         underline: const SizedBox(),
+  //         value: selectedProvinsiString.value,
+  //         borderRadius: BorderRadius.circular(10.0),
+  //         items: List.generate(wilayahController.provinceModels.value?.rajaongkir.results.length ?? 0, (i){
+  //           return DropdownMenuItem(value: wilayahController.provinceModels.value?.rajaongkir.results[i].province ?? "-", child: Text(wilayahController.provinceModels.value?.rajaongkir.results[i].province ?? "-"));
+  //         }),
+  //         onChanged: (value) {
+  //           selectedProvinceIndex(wilayahController.provinceModels.value?.rajaongkir.results.indexWhere((model) => model.province == value));
+  //           selectedProvinsiID.value = wilayahController.provinceModels.value!.rajaongkir.results[selectedProvinceIndex.value].provinceId;
+  //           wilayahController.getKabupaten(idProvince: selectedProvinsiID.value).then((result){
+  //             if(result) print("Success Get Kabupaten Data");
+  //           });
+  //         },
+  //       ),
+  //     ],
+  //   ));
+  // }
 
   // DropDown untuk pilihan lokasi Kabupaten
   Obx dropdownPickerKabupaten({String? name, bool? enable}){

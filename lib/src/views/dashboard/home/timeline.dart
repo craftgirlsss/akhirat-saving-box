@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:get/get.dart';
-import 'package:shimmer/shimmer.dart';
 
 class TimeLine extends StatefulWidget {
   const TimeLine({super.key});
@@ -35,18 +34,19 @@ class _TimeLineState extends State<TimeLine> {
           child: Obx(() => controller.isLoading.value ? SizedBox(
           width: size.width,
           height: size.height,
-          child: Shimmer.fromColors(
-            baseColor: Colors.red,
-            highlightColor: Colors.yellow,
-            child: const Text(
-              'Shimmer',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 40.0,
-                fontWeight:
-                FontWeight.bold,
-              ),
+          child: const Center(
+            child: CircularProgressIndicator(),
+          ),
+        ) : controller.daftarPekerjaan.isEmpty ? Center(
+        child: Container(
+          color: Colors.transparent,
+          child: const Text(
+            'Tidak ada item',
+            style: TextStyle(
+              fontSize: 40.0,
+              fontWeight: FontWeight.bold,
             ),
+          ),
           ),
         ) : controller.daftarPekerjaan.isEmpty ? Center(
         child: Container(

@@ -6,7 +6,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:shimmer/shimmer.dart';
 
 class TimelineEditor extends StatefulWidget {
   const TimelineEditor({super.key});
@@ -58,17 +57,18 @@ class _TimelineEditorState extends State<TimelineEditor> {
         SizedBox(
           width: size.width,
           height: size.height,
-          child: Shimmer.fromColors(
-            baseColor: Colors.red,
-            highlightColor: Colors.yellow,
-            child: const Text(
-              'Shimmer',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 40.0,
-                fontWeight:
-                FontWeight.bold,
-              ),
+          child: const Center(
+            child: CircularProgressIndicator(),
+          ),
+        ) : timelineController.temporaryList.isEmpty ? Center(
+        child: Container(
+          color: Colors.transparent,
+          child: const Text(
+            'Tidak ada item',
+            style: TextStyle(
+              fontSize: 40.0,
+              fontWeight: FontWeight.bold,
+            ),
             ),
           ),
         ) : timelineController.temporaryList.isEmpty ? Center(
